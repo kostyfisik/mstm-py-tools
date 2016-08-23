@@ -87,3 +87,7 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+mstm-v3/*.mod
+mstm-v3/mstm
+bin
