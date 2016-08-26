@@ -74,7 +74,8 @@ def SaveSpectra(fname, WL, span, total_points):
     R1,R2 = 0,0
     rg = np.linspace(-span, span, total_points)
 
-    R1 = 240/2 +300
+    #R1 = 240/2 +300
+    R1 = 407.5
     #R2 = 200/2
     Sep = 0
     for i in range(len(rg)):
@@ -97,8 +98,8 @@ def SaveSpectra(fname, WL, span, total_points):
 
 fname="spectra.dat"
 WL = 600
-span = 400 #nm
-total_points = 401
+span = 0.5 #nm
+total_points = 201
 
 sign = SaveSpectra(fname, WL, span, total_points)
 sign = sign[:-6]+str(WL)+"nm"
@@ -125,9 +126,9 @@ for i in range(plots):
                          solid_joinstyle='round', solid_capstyle='round', color='black'
                          , label=r"$Q_{sca}$"
     )
-    cax = ax.plot(data[i,:,0], data[i,:,11]/max(data[i,:,11])*max(data[i,:,9]), linewidth=plotwidth,
+    cax = ax.plot(data[i,:,0], data[i,:,11]/max(data[i,:,11])*max(data[i,:,9])/data[i,:,0]*max(data[i,:,0]), linewidth=plotwidth,
                          solid_joinstyle='round', solid_capstyle='round', color='red'
-                         , label=r"$norm(Q_{abs})*max(Q_{ext})$"
+                         , label=r"$norm(Q_{abs})*max(Q_{ext})*max(R)/R$"
     )
     cax = ax.plot(data[i,:,0], data[i,:,9], linewidth=plotwidth/2,
                          solid_joinstyle='round', solid_capstyle='round', color='blue'
