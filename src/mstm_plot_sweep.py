@@ -33,7 +33,7 @@ def SetMstmModel(mstm_input, WL, R1, R2, n1, n2, Sep):
     if R2 != 0:
         mstm_input.spheres.AddSphere(R2, [R1+R2+Sep, 0, 0], n2)
 ###############################################################################
-def ReadData(in_data,mstm_input):
+def ReadData(in_data,mstm_input, span):
     out_data = in_data
     isData = False
     WL = mstm_input.WL
@@ -42,12 +42,12 @@ def ReadData(in_data,mstm_input):
             # print(data_line)
             if "Qsca" in data_line:
                 if len(out_data) == 0:
-	            out_data += "# WL "+data_line
+	            out_data += "# x "+data_line
 	        isData = True
 	        continue
 	    if isData == True:
 		if "0" in data_line:
-		    out_data += str(WL)+" "+data_line
+		    out_data += str(span)+" "+data_line
 		else:
 		    isData = False
     return out_data
@@ -64,23 +64,23 @@ def LoadData(fname):
         data_spaced[ int(row[1])-1, int(j/number_of_spheres), :] = row
     return data, data_spaced
 ###############################################################################
-def SaveSpectra(fname, from_WL, to_WL, total_points):
-    WLs = np.linspace(from_WL, to_WL, total_points)
-    index_BaTiO3 = GetIndex(WLs, "BaTiO3-Wemple-o.txt")
-    index_Au = GetIndex(WLs, "Au-Jhonson.txt")    
+def SaveSpectra(fname, WL, span, total_points):
+    WLs = np.linspace(WL, WL, 1)
+    index_BaTiO3 = GetIndex(WLs, "BaTiO3-Wemple-o.txt")[0][1]
+    index_Au = GetIndex(WLs, "Au-Jhonson.txt")[0][1]
     #index_Au = GetIndex(WLs, "Au-Rakic.txt")    
     out_data=""
     mstm_input = mi.InputFile()
     R1,R2 = 0,0
+    rg = np.linspace(-span, span, total_points)
 
-    R1 = 240/2
+    R1 = 240/2 +300
     #R2 = 200/2
     Sep = 0
-    for i in range(len(WLs)):
-        WL = WLs[i]
-        n1 = index_BaTiO3[i][1]
-        n2 = index_Au[i][1]
-        SetMstmModel(mstm_input, WL, R1, R2, n1, n2, Sep)
+    for i in range(len(rg)):
+        n1 = index_BaTiO3
+        n2 = index_Au
+        SetMstmModel(mstm_input, WL, R1+rg[i], R2, n1, n2, Sep)
         mstm_input.WriteFile()
         sign = mstm_input.sign
         print(sign)
@@ -88,7 +88,7 @@ def SaveSpectra(fname, from_WL, to_WL, total_points):
         with  open(os.devnull, 'w') as FNULL:
             call(["mpirun", "-np", "2", "./mstm", "mstm.inp"],
                      stdout=FNULL)
-            out_data = ReadData(out_data, mstm_input)
+            out_data = ReadData(out_data, mstm_input, R1+rg[i])
     with open(fname, 'w') as f:
 			f.write(out_data)
     return sign
@@ -96,12 +96,12 @@ def SaveSpectra(fname, from_WL, to_WL, total_points):
 
 
 fname="spectra.dat"
-from_WL = 400
-to_WL = 800
-total_points = 21
+WL = 600
+span = 400 #nm
+total_points = 401
 
-sign = SaveSpectra(fname, from_WL, to_WL, total_points)
-sign = sign[:-6]+str(from_WL)+"_"+str(to_WL)+"nm"
+sign = SaveSpectra(fname, WL, span, total_points)
+sign = sign[:-6]+str(WL)+"nm"
 data_all, data = LoadData(fname)
     # mstm_input.cut_plane = 'xy'
     # mstm_input.plot_scale = (R1+3*Sep+2*R2)/R1
@@ -118,7 +118,7 @@ fig, axs = plt.subplots(plots,figsize=(4,2*plots), sharex=True)#, sharey=True)
     #     ax.spines[label].set_position(('outward',-1.3))
     #ax.tick_params(axis='x', pad=30)
 for i in range(plots):
-    plotwidth=2.0
+    plotwidth=.5
     ax = axs
     if plots > 1: ax = axs[i]
     cax = ax.plot(data[i,:,0], data[i,:,10], linewidth=plotwidth,
