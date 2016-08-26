@@ -8,6 +8,7 @@ class InputFile:
 	D = 0
 	Sep = 0
 	sign = ""
+	isPlotField = False
 	cut_plane = 'xy'
 	cut_plane_values={'xy':3, 'yx':3, 'yz':1, 'zy':1, 'zx':2, 'xz':2}
 	plot_scale = 1
@@ -16,8 +17,11 @@ class InputFile:
 		self.SetSign()
 		scale = 2.0*math.pi/float(self.WL)
 		R1 = self.spheres.radii[0]*scale
+		plot_nf = 0
+		if self.isPlotField: plot_nf = 1
 		span = round(2.0*R1*self.plot_scale*self.points)/self.points
 		step = 2*span/float(self.points)
+		
 		text = """begin_comment
 ***********************************************************
 """
@@ -93,7 +97,8 @@ scattering_coefficient_file
 track_iterations
 1
 calculate_near_field
-1
+"""
+		text += str(plot_nf) + """
 near_field_plane_coord
 """
 		text += str(self.cut_plane_values[self.cut_plane]) + """
@@ -136,23 +141,26 @@ sphere_sizes_and_positions
 		if self.spheres.Count() == 2:
 			self.sign += "_"+ str(self.spheres.radii[1])
 			self.sign += "__D_" + "{:.3g}".format(self.D) +"_Sep_"+"{:.3g}".format(self.Sep)
+		self.sign += "__WL_{:04.0f}nm".format(self.WL)
 	def WriteFile(self):
 		with open('mstm.inp', 'w') as f:
 			f.write(self.PrintInput())
 			
 
-R1 = 200
-n1 = 2+0.1j
-n2 = 3+2j
-R2 = 100
-Sep = 10
+# R1 = 200
+# n1 = 2+0.1j
+# n2 = 3+2j
+# R2 = 100
+# Sep = 10
 
-mstm_input = InputFile()
-mstm_input.spheres.AddSphere(R1, [0, 0, 0], n1)
-mstm_input.spheres.AddSphere(R2, [R1+R2+Sep, 0, 0], n2)
-mstm_input.cut_plane = 'xy'
-mstm_input.plot_scale = (R1+3*Sep+2*R2)/R1
-mstm_input.points = 150
+# mstm_input = InputFile()
+# mstm_input.spheres.AddSphere(R1, [0, 0, 0], n1)
+# mstm_input.spheres.AddSphere(R2, [R1+R2+Sep, 0, 0], n2)
+# mstm_input.cut_plane = 'xy'
+# mstm_input.plot_scale = (R1+3*Sep+2*R2)/R1
+# mstm_input.points = 150
+# #mstm_input.isPlotField = False
+# mstm_input.isPlotField = True
 
-print(mstm_input.PrintInput())
-mstm_input.WriteFile()
+# print(mstm_input.PrintInput())
+# mstm_input.WriteFile()

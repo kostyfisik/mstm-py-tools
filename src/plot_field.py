@@ -411,3 +411,16 @@ plt.draw()
 
 plt.clf()
 plt.close()
+
+def GetCSTField(cst_data_txt, WL):
+    x=np.transpose(np.loadtxt(cst_data_txt, skiprows=4))
+    E = np.sum(np.absolute(x[2]+1.0j*x[3])**2+np.absolute(x[4]+1.0j*x[5])**2+np.absolute(x[6]+1.0j*x[6])**2)
+    coordX = np.unique(x[0])/WL
+    coordZ = np.unique(x[1])/WL
+    print(x[2])
+    return E, coordX, coordZ
+
+# WL=800
+# cst_data_txt="N2__R_200_100__D_310_Sep_10__nf.dat"
+# Er, coordZ, coordX = GetCSTField(cst_data_txt,WL)
+# print(Er)
