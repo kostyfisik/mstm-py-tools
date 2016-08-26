@@ -47,23 +47,23 @@ write_sphere_data
 1
 length_scale_factor
 """
-# real_ref_index_scale_factor
-# 1.0d0
-# imag_ref_index_scale_factor
-# 1.0d0
 # real_chiral_factor
 # 0.0d0
 # imag_chiral_factor
 # 0.0d0
-# medium_real_ref_index
-# 1.0d0
-# medium_imag_ref_index
-# 0.d0
 # medium_real_chiral_factor
 # 0.d0
 # medium_imag_chiral_factor
 # 0.d0
 		text += "{:.15E}".format(scale) + """
+real_ref_index_scale_factor
+1.0d0
+imag_ref_index_scale_factor
+1.0d0
+medium_real_ref_index
+1.0d0
+medium_imag_ref_index
+0.d0
 target_euler_angles_deg
 0.0d0,0.0d0,0.0d0
 mie_epsilon

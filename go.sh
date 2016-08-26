@@ -1,14 +1,14 @@
 #!/bin/bash
-cd src
-./mstm-input.py
-cp mstm.inp ../bin
-cd ../bin
-rm *.dat
+cd bin
+rm *.dat *.pdf
+cp ../mstm-v3/mstm ./
 cp ../src/*.py ./
 cp ../data/Au-Jhonson.txt ./
+cp ../data/Au-Rakic.txt ./
 cp ../data/BaTiO3-Wemple-o.txt ./
 
 ./mstm_plot_spectra.py
+#ls
 # time mpirun -np 2 ./mstm mstm.inp
 # time ./plot-field.py
 # time ./check-field.py
