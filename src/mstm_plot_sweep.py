@@ -11,7 +11,9 @@ def GetIndex(WLs, fname):
     data = np.loadtxt(fname)
     WL = data[:,0]*1000.0
     indexRe = data[:,1]
-    indexIm = np.zeros(data.shape[0])+1e-4
+    indexIm = np.zeros(data.shape[0])+1e-3
+    #indexIm = np.zeros(data.shape[0])+1e-4
+    #indexIm = np.zeros(data.shape[0])+1e-5
     if data.shape[1] == 3:
 	indexIm = data[:,2]
     from scipy.interpolate import interp1d
@@ -25,13 +27,21 @@ def GetIndex(WLs, fname):
     # data = np.concatenate(WLs, )
     return np.transpose(data)
 ###############################################################################
-def SetMstmModel(mstm_input, WL, R1, R2, n1, n2, Sep):
+def SetMstmModel(mstm_input, WL, R1, R2, n1, n2, Sep, axis):
     mstm_input.WL = WL
     mstm_input.spheres.Reset()
     if R1 != 0:
         mstm_input.spheres.AddSphere(R1, [0, 0, 0], n1)
     if R2 != 0:
-        mstm_input.spheres.AddSphere(R2, [R1+R2+Sep, 0, 0], n2)
+        if axis == 'x':
+            mstm_input.spheres.AddSphere(R2, [R1+R2+Sep, 0, 0], n2)
+        if axis == 'y':
+            mstm_input.spheres.AddSphere(R2, [0, R1+R2+Sep, 0], n2)
+        if axis == 'z+':
+            mstm_input.spheres.AddSphere(R2, [0, 0, R1+R2+Sep], n2)
+        if axis == 'z-':
+            mstm_input.spheres.AddSphere(R2, [0, 0, -(R1+R2+Sep)], n2)
+
 ###############################################################################
 def ReadData(in_data,mstm_input, span):
     out_data = in_data
@@ -74,16 +84,23 @@ def SaveSpectra(fname, WL, span, total_points):
     R1,R2 = 0,0
     rg = np.linspace(-span, span, total_points)
 
-    #R1 = 240/2 +300
-    R1 = 407.5
-    #R2 = 200/2
-    Sep = 0
+    R1 = 240/2 
+    #R1 = 407.5
+    #R1 = 580.5
+
+    R1 = 350
+
+    R2 = 200/2
+
+    #R2 = 350
+    Sep = 100
+    axis = 'z-'
     for i in range(len(rg)):
         n1 = index_BaTiO3
         n2 = index_Au
-        SetMstmModel(mstm_input, WL, R1+rg[i], R2, n1, n2, Sep)
+        SetMstmModel(mstm_input, WL, R1+rg[i], R2, n1, n2, Sep,axis)
         mstm_input.WriteFile()
-        sign = mstm_input.sign
+        sign = str(axis) + "__" + mstm_input.sign
         print(sign)
         
         with  open(os.devnull, 'w') as FNULL:
@@ -98,8 +115,8 @@ def SaveSpectra(fname, WL, span, total_points):
 
 fname="spectra.dat"
 WL = 600
-span = 0.5 #nm
-total_points = 201
+span = 300 #nm
+total_points = 801
 
 sign = SaveSpectra(fname, WL, span, total_points)
 sign = sign[:-6]+str(WL)+"nm"
@@ -112,7 +129,7 @@ data_all, data = LoadData(fname)
 
 plots=len(data)
 ############################# Plotting ######################
-fig, axs = plt.subplots(plots,figsize=(4,2*plots), sharex=True)#, sharey=True)
+fig, axs = plt.subplots(2*plots,figsize=(4,2*2*plots), sharex=True)#, sharey=True)
 # for ax in axs:
 #     ax.locator_params(axis='y',nbins=4)
     # for label in ['left', 'right', 'top', 'bottom']:
@@ -120,21 +137,27 @@ fig, axs = plt.subplots(plots,figsize=(4,2*plots), sharex=True)#, sharey=True)
     #ax.tick_params(axis='x', pad=30)
 for i in range(plots):
     plotwidth=.5
-    ax = axs
-    if plots > 1: ax = axs[i]
+    ax = axs[i]
     cax = ax.plot(data[i,:,0], data[i,:,10], linewidth=plotwidth,
                          solid_joinstyle='round', solid_capstyle='round', color='black'
                          , label=r"$Q_{sca}$"
-    )
-    cax = ax.plot(data[i,:,0], data[i,:,11]/max(data[i,:,11])*max(data[i,:,9])/data[i,:,0]*max(data[i,:,0]), linewidth=plotwidth,
-                         solid_joinstyle='round', solid_capstyle='round', color='red'
-                         , label=r"$norm(Q_{abs})*max(Q_{ext})*max(R)/R$"
     )
     cax = ax.plot(data[i,:,0], data[i,:,9], linewidth=plotwidth/2,
                          solid_joinstyle='round', solid_capstyle='round', color='blue'
                          , label=r"$Q_{ext}$"
     )
-    lg=ax.legend(loc='upper right',prop={'size':6})
+    cax = ax.plot(data[i,:,0], data[i,:,11]/max(data[i,:,11])*max(data[i,:,9])/data[i,:,0]*max(data[i,:,0]), linewidth=plotwidth,
+                         solid_joinstyle='round', solid_capstyle='round', color='red'
+                         , label=r"$norm(Q_{abs})*max(Q_{ext})*max(R)/R$"
+    )
+    lg=ax.legend(loc='upper left',prop={'size':6})
+    lg.draw_frame(False)
+    ax = axs[i+plots]
+    cax = ax.plot(data[i,:,0], data[i,:,11]/data[i,:,0], linewidth=plotwidth,
+                         solid_joinstyle='round', solid_capstyle='round', color='red'
+                         , label=r"$Q_{abs}/R$"
+    )
+    lg=ax.legend(loc='upper left',prop={'size':6})
     lg.draw_frame(False)
 
 fname=sign
