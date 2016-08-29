@@ -23,182 +23,184 @@ import numpy as np
 import cmath
 
 
-def unit_vector(vector):
-    """ Returns the unit vector of the vector.  """
-    return vector / np.linalg.norm(vector)
+# def unit_vector(vector):
+#     """ Returns the unit vector of the vector.  """
+#     return vector / np.linalg.norm(vector)
 
 
-def angle_between(v1, v2):
-    """ Returns the angle in radians between vectors 'v1' and 'v2'::
+# def angle_between(v1, v2):
+#     """ Returns the angle in radians between vectors 'v1' and 'v2'::
 
-            >>> angle_between((1, 0, 0), (0, 1, 0))
-            1.5707963267948966
-            >>> angle_between((1, 0, 0), (1, 0, 0))
-            0.0
-            >>> angle_between((1, 0, 0), (-1, 0, 0))
-            3.141592653589793
-    """
-    v1_u = unit_vector(v1)
-    v2_u = unit_vector(v2)
-    angle = np.arccos(np.dot(v1_u, v2_u))
-    if np.isnan(angle):
-        if (v1_u == v2_u).all():
-            return 0.0
-        else:
-            return np.pi
-    return angle
-###############################################################################
-
-
-def GetFlow3D(x0, y0, z0, max_length, max_angle, x, m, pl):
-    # Initial position
-    flow_x = [x0]
-    flow_y = [y0]
-    flow_z = [z0]
-    max_step = x[-1] / 3
-    min_step = x[0] / 2000
-#    max_step = min_step
-    step = min_step * 2.0
-    if max_step < min_step:
-        max_step = min_step
-    coord = np.vstack(([flow_x[-1]], [flow_y[-1]], [flow_z[-1]])).transpose()
-    terms, E, H = fieldnlay(np.array([x]), np.array([m]), coord, pl=pl)
-    Ec, Hc = E[0, 0, :], H[0, 0, :]
-    S = np.cross(Ec, Hc.conjugate()).real
-    Snorm_prev = S / np.linalg.norm(S)
-    Sprev = S
-    length = 0
-    dpos = step
-    count = 0
-    while length < max_length:
-        count = count + 1
-        if (count > 4000):  # Limit length of the absorbed power streamlines
-            break
-        if step < max_step:
-            step = step * 2.0
-        r = np.sqrt(flow_x[-1]**2 + flow_y[-1]**2 + flow_z[-1]**2)
-        while step > min_step:
-            # Evaluate displacement from previous poynting vector
-            dpos = step
-            dx = dpos * Snorm_prev[0]
-            dy = dpos * Snorm_prev[1]
-            dz = dpos * Snorm_prev[2]
-            # Test the next position not to turn\chang size for more than
-            # max_angle
-            coord = np.vstack(([flow_x[-1] + dx], [flow_y[-1] + dy],
-                               [flow_z[-1] + dz])).transpose()
-            terms, E, H = fieldnlay(np.array([x]), np.array([m]), coord, pl=pl)
-            Ec, Hc = E[0, 0, :], H[0, 0, :]
-            Eth = max(np.absolute(Ec)) / 1e10
-            Hth = max(np.absolute(Hc)) / 1e10
-            for i in xrange(0, len(Ec)):
-                if abs(Ec[i]) < Eth:
-                    Ec[i] = 0 + 0j
-                if abs(Hc[i]) < Hth:
-                    Hc[i] = 0 + 0j
-            S = np.cross(Ec, Hc.conjugate()).real
-            if not np.isfinite(S).all():
-                break
-            Snorm = S / np.linalg.norm(S)
-            diff = (S - Sprev) / max(np.linalg.norm(S), np.linalg.norm(Sprev))
-            if np.linalg.norm(diff) < max_angle:
-                # angle = angle_between(Snorm, Snorm_prev)
-                # if abs(angle) < max_angle:
-                break
-            step = step / 2.0
-        # 3. Save result
-        Sprev = S
-        Snorm_prev = Snorm
-        dx = dpos * Snorm_prev[0]
-        dy = dpos * Snorm_prev[1]
-        dz = dpos * Snorm_prev[2]
-        length = length + step
-        flow_x.append(flow_x[-1] + dx)
-        flow_y.append(flow_y[-1] + dy)
-        flow_z.append(flow_z[-1] + dz)
-    return np.array(flow_x), np.array(flow_y), np.array(flow_z)
+#             >>> angle_between((1, 0, 0), (0, 1, 0))
+#             1.5707963267948966
+#             >>> angle_between((1, 0, 0), (1, 0, 0))
+#             0.0
+#             >>> angle_between((1, 0, 0), (-1, 0, 0))
+#             3.141592653589793
+#     """
+#     v1_u = unit_vector(v1)
+#     v2_u = unit_vector(v2)
+#     angle = np.arccos(np.dot(v1_u, v2_u))
+#     if np.isnan(angle):
+#         if (v1_u == v2_u).all():
+#             return 0.0
+#         else:
+#             return np.pi
+#     return angle
+# ###############################################################################
 
 
-###############################################################################
-def GetField(crossplane, npts, factor, x, m, pl):
-    """
-    crossplane: XZ, YZ, XY, or XYZ (half is XZ, half is YZ)
-    npts: number of point in each direction
-    factor: ratio of plotting size to outer size of the particle
-    x: size parameters for particle layers
-    m: relative index values for particle layers
-    """
-    scan = np.linspace(-factor*x[-1], factor*x[-1], npts)
-    zero = np.zeros(npts*npts, dtype = np.float64)
+# def GetFlow3D(x0, y0, z0, max_length, max_angle, x, m, pl):
+#     # Initial position
+#     flow_x = [x0]
+#     flow_y = [y0]
+#     flow_z = [z0]
+#     max_step = x[-1] / 3
+#     min_step = x[0] / 2000
+# #    max_step = min_step
+#     step = min_step * 2.0
+#     if max_step < min_step:
+#         max_step = min_step
+#     coord = np.vstack(([flow_x[-1]], [flow_y[-1]], [flow_z[-1]])).transpose()
+#     terms, E, H = fieldnlay(np.array([x]), np.array([m]), coord, pl=pl)
+#     Ec, Hc = E[0, 0, :], H[0, 0, :]
+#     S = np.cross(Ec, Hc.conjugate()).real
+#     Snorm_prev = S / np.linalg.norm(S)
+#     Sprev = S
+#     length = 0
+#     dpos = step
+#     count = 0
+#     while length < max_length:
+#         count = count + 1
+#         if (count > 4000):  # Limit length of the absorbed power streamlines
+#             break
+#         if step < max_step:
+#             step = step * 2.0
+#         r = np.sqrt(flow_x[-1]**2 + flow_y[-1]**2 + flow_z[-1]**2)
+#         while step > min_step:
+#             # Evaluate displacement from previous poynting vector
+#             dpos = step
+#             dx = dpos * Snorm_prev[0]
+#             dy = dpos * Snorm_prev[1]
+#             dz = dpos * Snorm_prev[2]
+#             # Test the next position not to turn\chang size for more than
+#             # max_angle
+#             coord = np.vstack(([flow_x[-1] + dx], [flow_y[-1] + dy],
+#                                [flow_z[-1] + dz])).transpose()
+#             terms, E, H = fieldnlay(np.array([x]), np.array([m]), coord, pl=pl)
+#             Ec, Hc = E[0, 0, :], H[0, 0, :]
+#             Eth = max(np.absolute(Ec)) / 1e10
+#             Hth = max(np.absolute(Hc)) / 1e10
+#             for i in xrange(0, len(Ec)):
+#                 if abs(Ec[i]) < Eth:
+#                     Ec[i] = 0 + 0j
+#                 if abs(Hc[i]) < Hth:
+#                     Hc[i] = 0 + 0j
+#             S = np.cross(Ec, Hc.conjugate()).real
+#             if not np.isfinite(S).all():
+#                 break
+#             Snorm = S / np.linalg.norm(S)
+#             diff = (S - Sprev) / max(np.linalg.norm(S), np.linalg.norm(Sprev))
+#             if np.linalg.norm(diff) < max_angle:
+#                 # angle = angle_between(Snorm, Snorm_prev)
+#                 # if abs(angle) < max_angle:
+#                 break
+#             step = step / 2.0
+#         # 3. Save result
+#         Sprev = S
+#         Snorm_prev = Snorm
+#         dx = dpos * Snorm_prev[0]
+#         dy = dpos * Snorm_prev[1]
+#         dz = dpos * Snorm_prev[2]
+#         length = length + step
+#         flow_x.append(flow_x[-1] + dx)
+#         flow_y.append(flow_y[-1] + dy)
+#         flow_z.append(flow_z[-1] + dz)
+#     return np.array(flow_x), np.array(flow_y), np.array(flow_z)
 
-    if crossplane=='XZ':
-        coordX, coordZ = np.meshgrid(scan, scan)
-        coordX.resize(npts * npts)
-        coordZ.resize(npts * npts)
-        coordY = zero
-        coordPlot1 = coordX
-        coordPlot2 = coordZ
-    elif crossplane == 'YZ':
-        coordY, coordZ = np.meshgrid(scan, scan)
-        coordY.resize(npts * npts)
-        coordZ.resize(npts * npts)
-        coordX = zero
-        coordPlot1 = coordY
-        coordPlot2 = coordZ
-    elif crossplane == 'XY':
-        coordX, coordY = np.meshgrid(scan, scan)
-        coordX.resize(npts * npts)
-        coordY.resize(npts * npts)
-        coordZ = zero
-        coordPlot1 = coordY
-        coordPlot2 = coordX
-    elif crossplane=='XYZ':
-        coordX, coordZ = np.meshgrid(scan, scan)
-        coordY, coordZ = np.meshgrid(scan, scan)
-        coordPlot1, coordPlot2 = np.meshgrid(scan, scan)
-        coordPlot1.resize(npts * npts)
-        coordPlot2.resize(npts * npts)
-        half=npts//2
-        # coordX = np.copy(coordX)
-        # coordY = np.copy(coordY)
-        coordX[:,:half]=0
-        coordY[:,half:]=0
-        coordX.resize(npts*npts)
-        coordY.resize(npts*npts)
-        coordZ.resize(npts*npts)
-    else:
-        print("Unknown crossplane")
-        import sys
-        sys.exit()
 
-    coord = np.vstack((coordX, coordY, coordZ)).transpose()
-    terms, E, H = fieldnlay(np.array([x]), np.array([m]), coord, pl=pl)
-    Ec = E[0, :, :]
-    Hc = H[0, :, :]
-    P = []
-    P = np.array(map(lambda n: np.linalg.norm(np.cross(Ec[n], Hc[n])).real,
-                     range(0, len(E[0]))))
+# ###############################################################################
+# def GetField(crossplane, npts, factor, x, m, pl):
+#     """
+#     crossplane: XZ, YZ, XY, or XYZ (half is XZ, half is YZ)
+#     npts: number of point in each direction
+#     factor: ratio of plotting size to outer size of the particle
+#     x: size parameters for particle layers
+#     m: relative index values for particle layers
+#     """
+#     scan = np.linspace(-factor*x[-1], factor*x[-1], npts)
+#     zero = np.zeros(npts*npts, dtype = np.float64)
 
-    # for n in range(0, len(E[0])):
-    #     P.append(np.linalg.norm( np.cross(Ec[n], np.conjugate(Hc[n]) ).real/2 ))
-    return Ec, Hc, P, coordPlot1, coordPlot2
+#     if crossplane=='XZ':
+#         coordX, coordZ = np.meshgrid(scan, scan)
+#         coordX.resize(npts * npts)
+#         coordZ.resize(npts * npts)
+#         coordY = zero
+#         coordPlot1 = coordX
+#         coordPlot2 = coordZ
+#     elif crossplane == 'YZ':
+#         coordY, coordZ = np.meshgrid(scan, scan)
+#         coordY.resize(npts * npts)
+#         coordZ.resize(npts * npts)
+#         coordX = zero
+#         coordPlot1 = coordY
+#         coordPlot2 = coordZ
+#     elif crossplane == 'XY':
+#         coordX, coordY = np.meshgrid(scan, scan)
+#         coordX.resize(npts * npts)
+#         coordY.resize(npts * npts)
+#         coordZ = zero
+#         coordPlot1 = coordY
+#         coordPlot2 = coordX
+#     elif crossplane=='XYZ':
+#         coordX, coordZ = np.meshgrid(scan, scan)
+#         coordY, coordZ = np.meshgrid(scan, scan)
+#         coordPlot1, coordPlot2 = np.meshgrid(scan, scan)
+#         coordPlot1.resize(npts * npts)
+#         coordPlot2.resize(npts * npts)
+#         half=npts//2
+#         # coordX = np.copy(coordX)
+#         # coordY = np.copy(coordY)
+#         coordX[:,:half]=0
+#         coordY[:,half:]=0
+#         coordX.resize(npts*npts)
+#         coordY.resize(npts*npts)
+#         coordZ.resize(npts*npts)
+#     else:
+#         print("Unknown crossplane")
+#         import sys
+#         sys.exit()
+
+#     coord = np.vstack((coordX, coordY, coordZ)).transpose()
+#     terms, E, H = fieldnlay(np.array([x]), np.array([m]), coord, pl=pl)
+#     Ec = E[0, :, :]
+#     Hc = H[0, :, :]
+#     P = []
+#     P = np.array(map(lambda n: np.linalg.norm(np.cross(Ec[n], Hc[n])).real,
+#                      range(0, len(E[0]))))
+
+#     # for n in range(0, len(E[0])):
+#     #     P.append(np.linalg.norm( np.cross(Ec[n], np.conjugate(Hc[n]) ).real/2 ))
+#     return Ec, Hc, P, coordPlot1, coordPlot2
 ###############################################################################
 
 def GetCSTField(cst_data_txt, WL):
     x=np.transpose(np.loadtxt(cst_data_txt, skiprows=4))
-    E = np.sqrt(np.absolute(x[2]+1.0j*x[3])**2+np.absolute(x[4]+1.0j*x[5])**2+np.absolute(x[6]+1.0j*x[6])**2)
+    E = np.sqrt(np.absolute(x[2]+1.0j*x[3])**2+np.absolute(x[4]+1.0j*x[5])**2+np.absolute(x[6]+1.0j*x[7])**2)
+    H = np.sqrt(np.absolute(x[8]+1.0j*x[9])**2+np.absolute(x[10]+1.0j*x[11])**2+np.absolute(x[12]+1.0j*x[13])**2)
     coordX = np.unique(x[0])/WL
     coordZ = np.unique(x[1])/WL
     print(x[2])
-    return E, coordX, coordZ
+    return E, H, coordX, coordZ
 
-def fieldplot(fig, ax, WL, comment='', WL_units=' ', crossplane='XZ',
+def fieldplot(fig, ax, WL, filetoplot, comment='', WL_units=' ', crossplane='XZ',
               field_to_plot='Pabs', npts=101, factor=2.1, flow_total=11,
               is_flow_extend=True, pl=-1, outline_width=1, subplot_label=' '):
     #cst_data_txt="mie-fine.txt"
     #cst_data_txt="mie.txt"
-    cst_data_txt="N2__R_200_100__D_310_Sep_10__nf.dat"
-    Er, coordZ, coordX = GetCSTField(cst_data_txt,WL)
+    
+    cst_data_txt=filetoplot #"N2__R_200_100__D_310_Sep_10__nf.dat"
+    Er, Hr, coordZ, coordX = GetCSTField(cst_data_txt,WL)
     npts = len(coordX)
     #crop = 4.9
     crop = 1
@@ -211,6 +213,11 @@ def fieldplot(fig, ax, WL, comment='', WL_units=' ', crossplane='XZ',
             #print(coordX)
             Eabs_data = np.fliplr(np.resize(Eabs, (len(coordX), len(coordZ))).T)#[:,int(npts/crop):-int(npts/crop)]
             label = r'$|E|$'
+        if field_to_plot == 'Habs':
+            Eabs = Hr
+            #print(coordX)
+            Eabs_data = np.fliplr(np.resize(Eabs, (len(coordX), len(coordZ))).T)#[:,int(npts/crop):-int(npts/crop)]
+            label = r'$|H|$'
         print(len(Eabs_data),len(Eabs_data[0]))
         print(len(coordZ))
         # WL units
@@ -230,8 +237,8 @@ def fieldplot(fig, ax, WL, comment='', WL_units=' ', crossplane='XZ',
         # Define scale ticks
         min_tick = np.amin(Eabs_data[~np.isnan(Eabs_data)])
         max_tick = np.amax(Eabs_data[~np.isnan(Eabs_data)])
-        min_tick = 0.0
-        max_tick = 2.59
+        # min_tick = 0.0
+        # max_tick = 2.59
         scale_ticks = np.linspace(min_tick, max_tick, 10)
         #scale_ticks = np.power(10.0, np.linspace(np.log10(min_tick), np.log10(max_tick), 6))
         #scale_ticks = [0.1,0.3,1,3,10, max_tick]
@@ -380,37 +387,38 @@ crossplane='XZ'
 #crossplane='XY'
 
 # Options to plot: Eabs, Habs, Pabs, angleEx, angleHy
+fields = ['Eabs','Habs']
 field_to_plot='Eabs'
 #field_to_plot='angleEx'
 comment='SiAgSi-absorber-flow'
 WL_units='nm'
 
-import matplotlib.pyplot as plt
-from matplotlib import rcParams
-rcParams.update({'font.size': 14})
-
-fig, axs = plt.subplots(1,1)#, sharey=True, sharex=True)
-fig.tight_layout()
-WL=3.75
-fieldplot(fig, axs, WL, comment, WL_units, crossplane, field_to_plot, outline_width=1.5)
-
-#fieldplot(x,m, WL, comment, WL_units, crossplane, field_to_plot, npts, factor, flow_total, is_flow_extend=False)
-
-# for ax in axs:
-#     ax.locator_params(axis='x',nbins=5)
-#     ax.locator_params(axis='y',nbins=5)
-
-fig.subplots_adjust(hspace=0.3, wspace=-0.1)
-
-plt.savefig(comment+"-CST-"+crossplane+"-"
-                    +field_to_plot+".pdf",pad_inches=0.02, bbox_inches='tight')
-
-plt.draw()
-
-#    plt.show()
-
-plt.clf()
-plt.close()
+import os, glob
+import string
+names = []
+for pathAndFilename in glob.iglob(os.path.join(r'.', r'*')):
+    title, ext = os.path.splitext(os.path.basename(pathAndFilename))
+    if "__nf" in title:
+        names.append(title+ext)
+        #os.rename(pathAndFilename, "./"+str(i).zfill(3)+"__"+title+ext)
+print("Files to plot:")
+print(names)
+for field_to_plot in fields:
+    for filename in sorted(names):
+        import matplotlib.pyplot as plt
+        from matplotlib import rcParams
+        rcParams.update({'font.size': 14})
+        fig, axs = plt.subplots(1,1)#, sharey=True, sharex=True)
+        fig.tight_layout()
+        WL=3.75
+        fieldplot(fig, axs, WL, filename, comment, WL_units, crossplane, field_to_plot, outline_width=1.5)
+        fig.subplots_adjust(hspace=0.3, wspace=-0.1)
+        plt.savefig(filename+"-MSTM-"
+                        +field_to_plot+".pdf",pad_inches=0.02, bbox_inches='tight')
+        plt.draw()
+        #    plt.show()
+        plt.clf()
+        plt.close()
 
 def GetCSTField(cst_data_txt, WL):
     x=np.transpose(np.loadtxt(cst_data_txt, skiprows=4))

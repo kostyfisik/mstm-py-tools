@@ -9,10 +9,11 @@ class InputFile:
 	Sep = 0
 	sign = ""
 	isPlotField = False
-	cut_plane = 'xy'
+	# cut_plane = 'xy'
+	cut_plane = 'xz'
 	cut_plane_values={'xy':3, 'yx':3, 'yz':1, 'zy':1, 'zx':2, 'xz':2}
 	plot_scale = 1
-	points = 101
+	points = 501
 	def PrintInput(self):
 		self.SetSign()
 		scale = 2.0*math.pi/float(self.WL)
@@ -142,6 +143,9 @@ sphere_sizes_and_positions
 			self.sign += "_"+ str(self.spheres.radii[1])
 			self.sign += "__D_" + "{:.3g}".format(self.D) +"_Sep_"+"{:.3g}".format(self.Sep)
 		self.sign += "__WL_{:04.0f}nm".format(self.WL)
+                if self.isPlotField == True:
+                    self.sign += "__"+self.cut_plane
+
 	def WriteFile(self):
 		with open('mstm.inp', 'w') as f:
 			f.write(self.PrintInput())
