@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 import Spheres as sp
 import math
+import numpy as np
 class InputFile:
     ############################################################################
     #Geom
@@ -52,8 +53,35 @@ class InputFile:
             self.GetSource(i)
             self.Run()
             out_data = self.ReadData(out_data, span_value)
-
+            self.ReadField(self.sign+"--nf.dat",self.spheres.WL)
             print(str(i)+" "+self.sign)
+        return out_data
+    ############################################################################
+    def ReadField(self,data_txt, WL):
+        x=np.transpose(np.loadtxt(data_txt, skiprows=4))
+        E = np.sqrt(np.absolute(x[2]+1.0j*x[3])**2+np.absolute(x[4]+1.0j*x[5])**2+np.absolute(x[6]+1.0j*x[7])**2)
+        H = np.sqrt(np.absolute(x[8]+1.0j*x[9])**2+np.absolute(x[10]+1.0j*x[11])**2+np.absolute(x[12]+1.0j*x[13])**2)
+        coordX = np.unique(x[0])/WL
+        coordZ = np.unique(x[1])/WL
+        return E, H, coordX, coordZ
+    ############################################################################
+    def ReadData(self, in_data, span_value):
+        out_data = in_data
+        isData = False
+        WL = self.spheres.WL
+        with open(self.sign+'.dat', 'r') as data_file:
+            for data_line in data_file:
+                if "Qsca" in data_line:
+                    if len(out_data) == 0:
+                        out_data += "# x WL "+data_line
+                    isData = True
+                    continue
+                if isData == True:
+                    # print(data_line[:-1])
+                    if 12 == len(data_line.split()):
+                        out_data += str(span_value)+" "+str(WL)+" "+data_line
+                    else:
+                        isData = False
         return out_data
     ############################################################################
     def AddSource(self,WL, ang_a, ang_b, ang_pol):
@@ -68,12 +96,38 @@ class InputFile:
         del self.ang_b_k_z[:]
         del self.ang_pol_e_kz[:]
     ############################################################################
+    def ResetMstmModel(self, WL, R1, R2, n1_name, n2_name, Sep, axis):
+        self.Sep = Sep
+        self.axis = axis
+        self.spheres.Reset()
+        self.spheres.WL = WL
+        if R1 != 0:
+            self.spheres.AddSphere(R1, [0, 0, 0], n1_name)
+        if R2 != 0:
+            if axis == 'x':
+                self.spheres.AddSphere(R2, [R1+R2+Sep, 0, 0], n2_name)
+            if axis == 'y':
+                self.spheres.AddSphere(R2, [0, R1+R2+Sep, 0], n2_name)
+            if axis == 'z+':
+                self.spheres.AddSphere(R2, [0, 0, R1+R2+Sep], n2_name)
+            if axis == 'z-':
+                self.spheres.AddSphere(R2, [0, 0, -(R1+R2+Sep)], n2_name)
+            self.SetSign()
+    def Run(self):
+        self.WriteFile()
+        from subprocess import call
+        import os
+        with  open(os.devnull, 'w') as FNULL:
+            call(["mpirun", "-np", "2", "./mstm", "mstm.inp"],
+                 stdout=FNULL)
+    ############################################################################
     def GetSource(self, i):
         assert (i<len(self.source_WL)),("ERROR! Not enough sources!")
         self.spheres.WL = self.source_WL[i]
         self.ang_a = self.ang_a_kz_x[i]
         self.ang_b = self.ang_b_k_z[i]
-        self.ang_pol = self.ang_pol_e_kz[i]        
+        self.ang_pol = self.ang_pol_e_kz[i]
+        self.SetSign()
     ############################################################################
     def PrintInput(self):
         self.SetSign()
@@ -216,71 +270,5 @@ sphere_sizes_and_positions
         with open('mstm.inp', 'w') as f:
             f.write(self.PrintInput())
     ############################################################################
-    def ResetMstmModel(self, WL, R1, R2, n1_name, n2_name, Sep, axis):
-        self.Sep = Sep
-        self.axis = axis
-        self.spheres.Reset()
-        self.spheres.WL = WL
-        if R1 != 0:
-            self.spheres.AddSphere(R1, [0, 0, 0], n1_name)
-        if R2 != 0:
-            if axis == 'x':
-                self.spheres.AddSphere(R2, [R1+R2+Sep, 0, 0], n2_name)
-            if axis == 'y':
-                self.spheres.AddSphere(R2, [0, R1+R2+Sep, 0], n2_name)
-            if axis == 'z+':
-                self.spheres.AddSphere(R2, [0, 0, R1+R2+Sep], n2_name)
-            if axis == 'z-':
-                self.spheres.AddSphere(R2, [0, 0, -(R1+R2+Sep)], n2_name)
-            self.SetSign()
-    def Run(self):
-        self.WriteFile()
-        from subprocess import call
-        import os
-        with  open(os.devnull, 'w') as FNULL:
-            call(["mpirun", "-np", "2", "./mstm", "mstm.inp"],
-                 stdout=FNULL)
-
-    ############################################################################
-    def ReadData(self, in_data, span_value):
-        out_data = in_data
-        isData = False
-        WL = self.spheres.WL
-        with open(self.sign+'.dat', 'r') as data_file:
-            for data_line in data_file:
-                if "Qsca" in data_line:
-                    if len(out_data) == 0:
-                        out_data += "# x WL "+data_line
-                    isData = True
-                    continue
-                if isData == True:
-                    # print(data_line[:-1])
-                    if 12 == len(data_line.split()):
-                        out_data += str(span_value)+" "+str(WL)+" "+data_line
-                    else:
-                        isData = False
-        return out_data
     ############################################################################
     ############################################################################
-    ############################################################################
-    ############################################################################
-
-
-
-# R1 = 200
-# n1 = 2+0.1j
-# n2 = 3+2j
-# r2 = 100
-# Sep = 10
-
-# mstm_input = InputFile()
-# mstm_input.spheres.AddSphere(R1, [0, 0, 0], n1)
-# mstm_input.spheres.AddSphere(R2, [R1+R2+Sep, 0, 0], n2)
-# mstm_input.cut_plane = 'xy'
-# mstm_input.plot_scale = (R1+3*Sep+2*R2)/R1
-# mstm_input.plot_points_per_R = 150
-# #mstm_input.isPlotField = False
-# mstm_input.isPlotField = True
-
-# print(mstm_input.PrintInput())
-# mstm_input.WriteFile()
