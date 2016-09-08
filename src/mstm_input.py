@@ -3,32 +3,78 @@
 import Spheres as sp
 import math
 class InputFile:
-    ###############################################################################
+    ############################################################################
     #Geom
     D = 0
     Sep = 0
     axis = 'x'
     spheres = sp.Spheres()
-    ###############################################################################
-    #Source        
+    ############################################################################
+    #Source. The first one is used for ordinary simulaitons
     # spheres.WL = 800
-    #Source angle
     ang_a = 0.0
     ang_b = 0.0
-    ang_c = 0.0
-    #Source_span
-    source_span_str = "none" # none, WL, ang_a, ang_b, ang_c
-    source_span = [400,800]  # list possible values
-    ###############################################################################
+    ang_pol = 0.0
+    # The list of sources can be filled to be iterated over for
+    # evaluation of the overlap integral.
+    source_WL = []
+    #Source angle
+    ang_a_kz_x = []
+    ang_b_k_z = []
+    ang_pol_e_kz = []
+    ############################################################################
     #Field
-    isPlotField = False
+    # isPlotField = False
+    isPlotField = True
     sign = ""
-    # cut_plane = 'xy'
     cut_plane = 'xz'
     cut_plane_values={'xy':3, 'yx':3, 'yz':1, 'zy':1, 'zx':2, 'xz':2}
-    plot_scale = 1 # Ratio to inner R
-    plot_points_per_R = 10 
-    ###############################################################################
+    ############################################################################
+    plot_scale = 1.0 # Ratio to inner R
+    plot_points_per_R = 10
+    nf_plane_position = 0.0
+    plot_scale = 1.0 # Ratio to inner R
+    plot_points_per_R = 10
+    nf_plane_position = 0.0
+
+    cut_plane = 'xz'
+    cut_plane_values={'xy':3, 'yx':3, 'yz':1, 'zy':1, 'zx':2, 'xz':2}
+    plot_scale = 1.0 # Ratio to inner R
+    plot_points_per_R = 10
+    nf_plane_position = 0.0
+    ############################################################################
+    def IntegrateOverlapNF(self, in_data, span_value):
+        """This will evaluate overlapping integral for field from two sources.
+        """
+        self.isPlotField = True
+        out_data = in_data
+        for i in range(len(self.source_WL)):
+            self.GetSource(i)
+            self.Run()
+            out_data = self.ReadData(out_data, span_value)
+
+            print(str(i)+" "+self.sign)
+        return out_data
+    ############################################################################
+    def AddSource(self,WL, ang_a, ang_b, ang_pol):
+        self.source_WL.append(WL)
+        self.ang_a_kz_x.append(ang_a)
+        self.ang_b_k_z.append(ang_b)
+        self.ang_pol_e_kz.append(ang_pol)
+    ############################################################################
+    def ResetSources(self):
+        del self.source_WL[:]
+        del self.ang_a_kz_x[:]
+        del self.ang_b_k_z[:]
+        del self.ang_pol_e_kz[:]
+    ############################################################################
+    def GetSource(self, i):
+        assert (i<len(self.source_WL)),("ERROR! Not enough sources!")
+        self.spheres.WL = self.source_WL[i]
+        self.ang_a = self.ang_a_kz_x[i]
+        self.ang_b = self.ang_b_k_z[i]
+        self.ang_pol = self.ang_pol_e_kz[i]        
+    ############################################################################
     def PrintInput(self):
         self.SetSign()
         scale = 2.0*math.pi/float(self.spheres.WL)
@@ -121,7 +167,8 @@ near_field_plane_coord
 """
         text += str(self.cut_plane_values[self.cut_plane]) + """
 near_field_plane_position
-0.0d0
+"""
+        text += "{:f}".format(self.nf_plane_position) + """
 near_field_plane_vertices
 """
         text += "{:f} {:f} {:f} {:f}".format(-field_span, -field_span, field_span, field_span) + """
@@ -129,7 +176,8 @@ spacial_step_size
 """
         text += "{:f}".format(step) + """
 polarization_angle_deg
-0.d0
+"""
+        text += "{:f}".format(self.ang_pol) + """
 near_field_output_file
 """
         text += self.sign + """--nf.dat
@@ -147,7 +195,7 @@ sphere_sizes_and_positions
 """
         text += self.spheres.PrintAll()
         return text
-    ###############################################################################
+    ############################################################################
     def SetSign(self):
         self.D = 0    
         if self.spheres.Count() == 2:
@@ -163,11 +211,11 @@ sphere_sizes_and_positions
         self.sign += "-WL-{:04.0f}nm".format(self.spheres.WL)
         if self.isPlotField == True:
             self.sign += "-"+self.cut_plane
-    ###############################################################################
+    ############################################################################
     def WriteFile(self):
         with open('mstm.inp', 'w') as f:
             f.write(self.PrintInput())
-    ###############################################################################
+    ############################################################################
     def ResetMstmModel(self, WL, R1, R2, n1_name, n2_name, Sep, axis):
         self.Sep = Sep
         self.axis = axis
@@ -186,7 +234,6 @@ sphere_sizes_and_positions
                 self.spheres.AddSphere(R2, [0, 0, -(R1+R2+Sep)], n2_name)
             self.SetSign()
     def Run(self):
-        print(self.sign)
         self.WriteFile()
         from subprocess import call
         import os
@@ -194,30 +241,29 @@ sphere_sizes_and_positions
             call(["mpirun", "-np", "2", "./mstm", "mstm.inp"],
                  stdout=FNULL)
 
-    ###############################################################################
+    ############################################################################
     def ReadData(self, in_data, span_value):
         out_data = in_data
         isData = False
         WL = self.spheres.WL
         with open(self.sign+'.dat', 'r') as data_file:
             for data_line in data_file:
-                # print(data_line[:-1])
                 if "Qsca" in data_line:
                     if len(out_data) == 0:
-                        out_data += "# x "+data_line
+                        out_data += "# x WL "+data_line
                     isData = True
                     continue
                 if isData == True:
-                    if "0" in data_line:
-                        out_data += str(span_value)+" "+data_line
-                        # print(data_line)
+                    # print(data_line[:-1])
+                    if 12 == len(data_line.split()):
+                        out_data += str(span_value)+" "+str(WL)+" "+data_line
                     else:
                         isData = False
         return out_data
-    ###############################################################################
-    ###############################################################################
-    ###############################################################################
-    ###############################################################################
+    ############################################################################
+    ############################################################################
+    ############################################################################
+    ############################################################################
 
 
 
