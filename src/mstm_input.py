@@ -31,38 +31,78 @@ class InputFile:
     cut_plane = 'xz'
     cut_plane_values={'xy':3, 'yx':3, 'yz':1, 'zy':1, 'zx':2, 'xz':2}
     ############################################################################
-    plot_scale = 1.0 # Ratio to inner R
-    plot_points_per_R = 10
-    nf_plane_position = 0.0
-    plot_scale = 1.0 # Ratio to inner R
-    plot_points_per_R = 10
-    nf_plane_position = 0.0
-
     cut_plane = 'xz'
     cut_plane_values={'xy':3, 'yx':3, 'yz':1, 'zy':1, 'zx':2, 'xz':2}
-    plot_scale = 1.0 # Ratio to inner R
-    plot_points_per_R = 10
+    #plot_scale = 1.0 # Ratio to first sphere
+    plot_scale = 0.99995 # Ratio to first sphere for 
+    plot_points_per_diameter = 12 # for the first sphere
     nf_plane_position = 0.0
+    r_in = 0.0;    r_out = 0.0
     ############################################################################
     def IntegrateOverlapNF(self, in_data, span_value):
         """This will evaluate overlapping integral for field from two sources.
         """
         self.isPlotField = True
+        self.plot_scale = 0.99995 # Should be a bit <1, to get points
+                                  # on the boundary correct
         out_data = in_data
-        for i in range(len(self.source_WL)):
-            self.GetSource(i)
-            self.Run()
-            out_data = self.ReadData(out_data, span_value)
-            self.ReadField(self.sign+"--nf.dat",self.spheres.WL)
-            print(str(i)+" "+self.sign)
-        return out_data
+        R = self.spheres.radii[0]
+        plane_pos = np.linspace(-R, R, self.plot_points_per_diameter)
+        Es, Hs, coordXs, coordZs  = [], [], [], []
+        self.r_in = 0.0;        self.r_out = 0.0;        integral = 0.0
+        for pos in plane_pos:
+            del Es[:]; del Hs[:]; del coordXs[:]; del coordZs[:]
+            for i in range(len(self.source_WL)):
+                self.GetSource(i)  #Set WL first
+                scale = 2.0*math.pi/float(self.spheres.WL)
+                self.nf_plane_position = pos*scale
+                self.Run()
+                out_data = self.ReadData(out_data, span_value)
+                E, H, coordX, coordZ = self.ReadField(self.sign+"--nf.dat",self.spheres.WL)
+                Es.append(E);    Hs.append(H)
+                coordXs.append(coordX/scale);    coordZs.append(coordZ/scale)
+            self.CheckCoords(coordXs)
+            self.CheckCoords(coordZs)
+            integral += self.IntegrateInPlane(Es, pos, coordXs[0], coordZs[0])
+        print ("r_in share = "+str(self.r_in/(self.r_out+self.r_in)))
+        return out_data, integral/self.r_in
+    ############################################################################
+    def IntegrateInPlane(self,Es, coord_y, coordXs, coordZs):
+        plane_int = 0.0
+        for i in range(len(coordXs)):
+            dist=math.sqrt(coordXs[i]**2+coord_y**2+coordZs[i]**2)
+            if dist < self.spheres.radii[0]*self.plot_scale:
+                plane_int += Es[0][i]*Es[1][i]
+                self.r_in += 1
+            else:
+                self.r_out +=1
+        return plane_int
+    ############################################################################
+    def CheckCoords(self,coords):
+        ref = coords[0]
+        for coord in coords:
+            if len(coord) != len(ref):
+                 raise ValueError("ERROR!!! Cross-sections coordinats do not match by len() !")
+            i = 0
+            for i in range(len(coord)):
+                diff = 1.0 - coord[i]/ref[i]
+                if abs(diff) > 1e-2:  # Defined by number of digits in the MSTM output
+                    raise ValueError("ERROR!!! Cross-sections coordinats do not match: %f and %f" % (coord[i], ref[i]))
     ############################################################################
     def ReadField(self,data_txt, WL):
-        x=np.transpose(np.loadtxt(data_txt, skiprows=4))
+        skips = 0
+        with open(data_txt, 'r') as data_file:
+            for data_line in data_file:
+                if len(data_line.split()) > 4: break
+                skips += 1
+        x=np.transpose(np.loadtxt(data_txt, skiprows=skips))
         E = np.sqrt(np.absolute(x[2]+1.0j*x[3])**2+np.absolute(x[4]+1.0j*x[5])**2+np.absolute(x[6]+1.0j*x[7])**2)
         H = np.sqrt(np.absolute(x[8]+1.0j*x[9])**2+np.absolute(x[10]+1.0j*x[11])**2+np.absolute(x[12]+1.0j*x[13])**2)
-        coordX = np.unique(x[0])/WL
-        coordZ = np.unique(x[1])/WL
+        # Coordinates are defined by a cut plane. Here the names are for `xz` case.
+        coordX = x[0]
+        coordZ = x[1]
+        # coordX = np.unique(x[0])
+        # coordZ = np.unique(x[1])
         return E, H, coordX, coordZ
     ############################################################################
     def ReadData(self, in_data, span_value):
@@ -136,8 +176,8 @@ class InputFile:
         plot_nf = 0
         if self.isPlotField:
             plot_nf = 1
-        field_span = round(R1*self.plot_scale*self.plot_points_per_R)/self.plot_points_per_R
-        step = field_span/float(self.plot_points_per_R)
+        field_span = R1*self.plot_scale
+        step = 2*field_span/float(self.plot_points_per_diameter-1)
         text = """begin_comment
 ***********************************************************
 """
@@ -204,10 +244,10 @@ normalize_scattering_matrix
 1
 incident_azimuth_angle_deg
 """
-        text += str(self.ang_a) + """
+        text += "{:.15E}".format(self.ang_a) + """
 incident_polar_angle_deg
 """
-        text += str(self.ang_b) + """
+        text += "{:.15E}".format(self.ang_b) + """
 calculate_scattering_coefficients
 1
 scattering_coefficient_file
@@ -222,16 +262,16 @@ near_field_plane_coord
         text += str(self.cut_plane_values[self.cut_plane]) + """
 near_field_plane_position
 """
-        text += "{:f}".format(self.nf_plane_position) + """
+        text += "{:.15E}".format(self.nf_plane_position) + """
 near_field_plane_vertices
 """
-        text += "{:f} {:f} {:f} {:f}".format(-field_span, -field_span, field_span, field_span) + """
+        text += "{:.15E} {:.15E} {:.15E} {:.15E}".format(-field_span, -field_span, field_span, field_span) + """
 spacial_step_size
 """
-        text += "{:f}".format(step) + """
+        text += "{:.15E}".format(step) + """
 polarization_angle_deg
 """
-        text += "{:f}".format(self.ang_pol) + """
+        text += "{:.15E}".format(self.ang_pol) + """
 near_field_output_file
 """
         text += self.sign + """--nf.dat
