@@ -74,12 +74,10 @@ class InputFile:
             dist=math.sqrt(coordXs[i]**2+coord_y**2+coordZs[i]**2)
             if dist < self.spheres.radii[0]*self.plot_scale:
                 x = Es[0][i]
-                #E0 = [x[0]+1.0j*x[1], x[2]+1.0j*x[3], x[4]+1.0j*x[5]]
-                E0 = np.sqrt(np.absolute(x[0]+1.0j*x[1])**2+np.absolute(x[2]+1.0j*x[3])**2+np.absolute(x[4]+1.0j*x[5])**2)
+                E0 = [x[0]+1.0j*x[1], x[2]+1.0j*x[3], x[4]+1.0j*x[5]]
                 x = Es[1][i]
-                #E1 = [x[0]+1.0j*x[1], x[2]+1.0j*x[3], x[4]+1.0j*x[5]]
-                E1 = np.sqrt(np.absolute(x[0]+1.0j*x[1])**2+np.absolute(x[2]+1.0j*x[3])**2+np.absolute(x[4]+1.0j*x[5])**2)
-                plane_int += E0*E1
+                E1 = [x[0]+1.0j*x[1], x[2]+1.0j*x[3], x[4]+1.0j*x[5]]
+                plane_int += E0[0]*E1[0] + E0[1]*E1[1] +  E0[2]*E1[2]
                 self.r_in += 1
             else:
                 self.r_out +=1
