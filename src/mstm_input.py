@@ -35,7 +35,7 @@ class InputFile:
     cut_plane_values={'xy':3, 'yx':3, 'yz':1, 'zy':1, 'zx':2, 'xz':2}
     #plot_scale = 1.0 # Ratio to first sphere
     plot_scale = 0.99995 # Ratio to first sphere for 
-    plot_points_per_diameter = 12 # for the first sphere
+    plot_points_per_diameter = 6 # for the first sphere
     nf_plane_position = 0.0
     r_in = 0.0;    r_out = 0.0
     ############################################################################
@@ -68,11 +68,18 @@ class InputFile:
         return out_data, integral/self.r_in
     ############################################################################
     def IntegrateInPlane(self,Es, coord_y, coordXs, coordZs):
+        print(Es[0][0])
         plane_int = 0.0
         for i in range(len(coordXs)):
             dist=math.sqrt(coordXs[i]**2+coord_y**2+coordZs[i]**2)
             if dist < self.spheres.radii[0]*self.plot_scale:
-                plane_int += Es[0][i]*Es[1][i]
+                x = Es[0][i]
+                #E0 = [x[0]+1.0j*x[1], x[2]+1.0j*x[3], x[4]+1.0j*x[5]]
+                E0 = np.sqrt(np.absolute(x[0]+1.0j*x[1])**2+np.absolute(x[2]+1.0j*x[3])**2+np.absolute(x[4]+1.0j*x[5])**2)
+                x = Es[1][i]
+                #E1 = [x[0]+1.0j*x[1], x[2]+1.0j*x[3], x[4]+1.0j*x[5]]
+                E1 = np.sqrt(np.absolute(x[0]+1.0j*x[1])**2+np.absolute(x[2]+1.0j*x[3])**2+np.absolute(x[4]+1.0j*x[5])**2)
+                plane_int += E0*E1
                 self.r_in += 1
             else:
                 self.r_out +=1
@@ -96,8 +103,12 @@ class InputFile:
                 if len(data_line.split()) > 4: break
                 skips += 1
         x=np.transpose(np.loadtxt(data_txt, skiprows=skips))
-        E = np.sqrt(np.absolute(x[2]+1.0j*x[3])**2+np.absolute(x[4]+1.0j*x[5])**2+np.absolute(x[6]+1.0j*x[7])**2)
-        H = np.sqrt(np.absolute(x[8]+1.0j*x[9])**2+np.absolute(x[10]+1.0j*x[11])**2+np.absolute(x[12]+1.0j*x[13])**2)
+        E = x[1:7].transpose()
+        print(E)
+        # E = np.sqrt(np.absolute(x[2]+1.0j*x[3])**2+np.absolute(x[4]+1.0j*x[5])**2+np.absolute(x[6]+1.0j*x[7])**2)
+        H = []
+        H.append(x[7:13])
+        # H = np.sqrt(np.absolute(x[8]+1.0j*x[9])**2+np.absolute(x[10]+1.0j*x[11])**2+np.absolute(x[12]+1.0j*x[13])**2)
         # Coordinates are defined by a cut plane. Here the names are for `xz` case.
         coordX = x[0]
         coordZ = x[1]
@@ -307,6 +318,7 @@ sphere_sizes_and_positions
             self.sign += "-"+self.cut_plane
     ############################################################################
     def WriteFile(self):
+        print(self.PrintInput())
         with open('mstm.inp', 'w') as f:
             f.write(self.PrintInput())
     ############################################################################
