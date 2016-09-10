@@ -6992,13 +6992,13 @@
                   if(nfoutunit.ne.0) then
                      if(nfoutdata.eq.0) then
                         esquare=dot_product(efield(:),efield(:))
-                        write(nfoutunit,'(2f9.4,e13.5)')  &
+                        write(nfoutunit,'(2f19.14,e23.15)')  &
                            xgp(gcoord(1)),xgp(gcoord(2)),esquare
                      elseif(nfoutdata.eq.1) then
-                        write(nfoutunit,'(2f9.4,6e13.5)')  &
+                        write(nfoutunit,'(2f19.14,6e23.15)')  &
                            xgp(gcoord(1)),xgp(gcoord(2)),efield(:)
                      else
-                        write(nfoutunit,'(2f9.4,12e13.5)') &
+                        write(nfoutunit,'(2f19.14,12e23.15)') &
                            xgp(gcoord(1)),xgp(gcoord(2)),efield(:),hfield(:)
                      endif
                   endif

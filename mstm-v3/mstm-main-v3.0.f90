@@ -329,9 +329,9 @@
                      write(3,'(2i9,5e13.5)') nsphere,neqns,alpha,beta,cbeam,rimedium(1)
                      noff=0
                      do i=1,nsphere
-                        write(3,'(2i5,8e13.5)') nodr(i),numberfieldexp(i),xsp(i), &
+                        write(3,'(2i5,8e23.15)') nodr(i),numberfieldexp(i),xsp(i), &
                              rpos(:,i),ri(:,i)
-                        write(3,'(9e13.5)') qext(i,:),qabs(i,:),qsca(i,:)
+                        write(3,'(9e23.15)') qext(i,:),qabs(i,:),qsca(i,:)
                         allocate(amnp1(0:nodr(i)+1,nodr(i),2),amnp2(0:nodr(i)+1,nodr(i),2))
                         nblk=2*nodr(i)*(nodr(i)+2)
                         do k=1,numberfieldexp(i)
