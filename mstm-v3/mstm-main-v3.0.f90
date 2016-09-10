@@ -579,18 +579,18 @@
                   endif
                   if(.not.tmonfile(i)) then
                      if(nonactive.eq.0) then
-                        write(1,'(2i5,4f10.4,4f10.6,4e13.5)') i, k,xsp(i),rposi, ri(:,i), &
+                        write(1,'(2i5,4f20.14,4f20.16,4e23.15)') i, k,xsp(i),rposi, ri(:,i), &
                            qeff(1),qeff(2),qeff(3),qeff(4)
                      else
-                        write(1,'(2i5,4f10.4,2f10.6,4e13.5)') i, k,xsp(i),rposi, ri(1,i), &
+                        write(1,'(2i5,4f20.14,2f20.16,4e23.15)') i, k,xsp(i),rposi, ri(1,i), &
                            qeff(1),qeff(2),qeff(3),qeff(4)
                      endif
                   else
                      if(nonactive.eq.0) then
-                        write(1,'(2i5,4f10.4,5x,a35,4e13.5)') i, k,xsp(i),rposi, tmfile(i), &
+                        write(1,'(2i5,4f20.14,5x,a35,4e23.15)') i, k,xsp(i),rposi, tmfile(i), &
                            qeff(1),qeff(2),qeff(3),qeff(4)
                      else
-                        write(1,'(2i5,4f10.4,3x,a17,4e13.5)') i, k,xsp(i),rposi, tmfile(i), &
+                        write(1,'(2i5,4f20.14,3x,a17,4e23.15)') i, k,xsp(i),rposi, tmfile(i), &
                            qeff(1),qeff(2),qeff(3),qeff(4)
                      endif
                   endif
