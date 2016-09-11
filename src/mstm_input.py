@@ -36,7 +36,7 @@ class InputFile:
     cut_plane_values={'xy':3, 'yx':3, 'yz':1, 'zy':1, 'zx':2, 'xz':2}
     #plot_scale = 1.0 # Ratio to first sphere
     plot_scale = 0.99995 # Ratio to first sphere for 
-    plot_points_per_diameter = 11 # for the first sphere
+    plot_points_per_diameter = 12 # for the first sphere
     nf_plane_position = 0.0
     r_in = 0.0;    r_out = 0.0
     ############################################################################
@@ -66,21 +66,21 @@ class InputFile:
             self.CheckCoords(coordZs)
             integral += self.IntegrateInPlane(Es, pos, coordXs[0], coordZs[0])
         print ("r_in share = "+str(self.r_in/(self.r_out+self.r_in)))
-        print (integral)
         return out_data, integral.imag/self.r_in
         #return out_data, np.absolute(integral)/self.r_in
     ############################################################################
     def IntegrateInPlane(self,Es, coord_y, coordXs, coordZs):
-        # print(Es[0][0])
         plane_int = 0.0
         for i in range(len(coordXs)):
             dist=math.sqrt(coordXs[i]**2+coord_y**2+coordZs[i]**2)
             if dist < self.spheres.radii[0]*self.plot_scale:
                 x = Es[0][i]
-                E0 = [x[0]+1.0j*x[1], x[2]+1.0j*x[3], x[4]+1.0j*x[5]]
+                E0 = np.array([x[0]+1.0j*x[1], x[2]+1.0j*x[3], x[4]+1.0j*x[5]])
+                #E0 = [x[0]-1.0j*x[1], x[2]-1.0j*x[3], x[4]-1.0j*x[5]]
                 x = Es[1][i]
-                E1 = [x[0]+1.0j*x[1], x[2]+1.0j*x[3], x[4]+1.0j*x[5]]
-                plane_int += E0[0]*E1[0] + E0[1]*E1[1] +  E0[2]*E1[2]
+                E1 = np.array([x[0]+1.0j*x[1], x[2]+1.0j*x[3], x[4]+1.0j*x[5]])
+                plane_int += np.inner(E0,E1.conjugate())
+                # plane_int += E0[0].conjugate()*E1[0] + E0[1].conjugate()*E1[1] +  E0[2].conjugate*E1[2]
                 # plane_int += E0[0]*E1[0].conjugate() + E0[1]*E1[1].conjugate() +  E0[2]*E1[2].conjugate()
                 self.r_in += 1
             else:
@@ -106,7 +106,6 @@ class InputFile:
                 skips += 1
         x=np.transpose(np.loadtxt(data_txt, skiprows=skips))
         E = x[1:7].transpose()
-        # print(E)
         # E = np.sqrt(np.absolute(x[2]+1.0j*x[3])**2+np.absolute(x[4]+1.0j*x[5])**2+np.absolute(x[6]+1.0j*x[7])**2)
         H = []
         H.append(x[7:13])
@@ -130,7 +129,6 @@ class InputFile:
                     isData = True
                     continue
                 if isData == True:
-                    # print(data_line[:-1])
                     if 12 == len(data_line.split()):
                         out_data += str(span_value)+" "+str(WL)+" "+data_line
                     else:
@@ -318,8 +316,12 @@ sphere_sizes_and_positions
         self.sign += "-WL-{:04.0f}nm".format(self.spheres.WL)
         if self.isPlotField == True:
             self.sign += "-"+self.cut_plane
+        self.sign += "-src-ang"
         for i in range(len(self.source_WL)):
-            self.sign += "-src-"+"{:.3g}".format(self.ang_b_k_z[i])+"-"+"{:.3g}".format(self.ang_pol_e_kz[i])
+            self.sign += "-{:.3g}".format(self.ang_b_k_z[i])
+        self.sign += "-pol"
+        for i in range(len(self.source_WL)):
+            self.sign += "-{:.3g}".format(self.ang_pol_e_kz[i])
     ############################################################################
     def WriteFile(self):
         with open('mstm.inp', 'w') as f:

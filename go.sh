@@ -13,7 +13,7 @@ cp ../data/BaTiO3-Wemple-o.txt ./
 
 #ls
 # time mpirun -np 2 ./mstm mstm.inp
-#time ./plot_field.py
+time ./plot_field.py
 # time ./check-field.py
 #mpirun -np 2 ./mstm single-sphere.inp
 #cat nf*

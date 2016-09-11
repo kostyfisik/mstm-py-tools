@@ -23,169 +23,14 @@ import numpy as np
 import cmath
 
 
-# def unit_vector(vector):
-#     """ Returns the unit vector of the vector.  """
-#     return vector / np.linalg.norm(vector)
-
-
-# def angle_between(v1, v2):
-#     """ Returns the angle in radians between vectors 'v1' and 'v2'::
-
-#             >>> angle_between((1, 0, 0), (0, 1, 0))
-#             1.5707963267948966
-#             >>> angle_between((1, 0, 0), (1, 0, 0))
-#             0.0
-#             >>> angle_between((1, 0, 0), (-1, 0, 0))
-#             3.141592653589793
-#     """
-#     v1_u = unit_vector(v1)
-#     v2_u = unit_vector(v2)
-#     angle = np.arccos(np.dot(v1_u, v2_u))
-#     if np.isnan(angle):
-#         if (v1_u == v2_u).all():
-#             return 0.0
-#         else:
-#             return np.pi
-#     return angle
-# ###############################################################################
-
-
-# def GetFlow3D(x0, y0, z0, max_length, max_angle, x, m, pl):
-#     # Initial position
-#     flow_x = [x0]
-#     flow_y = [y0]
-#     flow_z = [z0]
-#     max_step = x[-1] / 3
-#     min_step = x[0] / 2000
-# #    max_step = min_step
-#     step = min_step * 2.0
-#     if max_step < min_step:
-#         max_step = min_step
-#     coord = np.vstack(([flow_x[-1]], [flow_y[-1]], [flow_z[-1]])).transpose()
-#     terms, E, H = fieldnlay(np.array([x]), np.array([m]), coord, pl=pl)
-#     Ec, Hc = E[0, 0, :], H[0, 0, :]
-#     S = np.cross(Ec, Hc.conjugate()).real
-#     Snorm_prev = S / np.linalg.norm(S)
-#     Sprev = S
-#     length = 0
-#     dpos = step
-#     count = 0
-#     while length < max_length:
-#         count = count + 1
-#         if (count > 4000):  # Limit length of the absorbed power streamlines
-#             break
-#         if step < max_step:
-#             step = step * 2.0
-#         r = np.sqrt(flow_x[-1]**2 + flow_y[-1]**2 + flow_z[-1]**2)
-#         while step > min_step:
-#             # Evaluate displacement from previous poynting vector
-#             dpos = step
-#             dx = dpos * Snorm_prev[0]
-#             dy = dpos * Snorm_prev[1]
-#             dz = dpos * Snorm_prev[2]
-#             # Test the next position not to turn\chang size for more than
-#             # max_angle
-#             coord = np.vstack(([flow_x[-1] + dx], [flow_y[-1] + dy],
-#                                [flow_z[-1] + dz])).transpose()
-#             terms, E, H = fieldnlay(np.array([x]), np.array([m]), coord, pl=pl)
-#             Ec, Hc = E[0, 0, :], H[0, 0, :]
-#             Eth = max(np.absolute(Ec)) / 1e10
-#             Hth = max(np.absolute(Hc)) / 1e10
-#             for i in xrange(0, len(Ec)):
-#                 if abs(Ec[i]) < Eth:
-#                     Ec[i] = 0 + 0j
-#                 if abs(Hc[i]) < Hth:
-#                     Hc[i] = 0 + 0j
-#             S = np.cross(Ec, Hc.conjugate()).real
-#             if not np.isfinite(S).all():
-#                 break
-#             Snorm = S / np.linalg.norm(S)
-#             diff = (S - Sprev) / max(np.linalg.norm(S), np.linalg.norm(Sprev))
-#             if np.linalg.norm(diff) < max_angle:
-#                 # angle = angle_between(Snorm, Snorm_prev)
-#                 # if abs(angle) < max_angle:
-#                 break
-#             step = step / 2.0
-#         # 3. Save result
-#         Sprev = S
-#         Snorm_prev = Snorm
-#         dx = dpos * Snorm_prev[0]
-#         dy = dpos * Snorm_prev[1]
-#         dz = dpos * Snorm_prev[2]
-#         length = length + step
-#         flow_x.append(flow_x[-1] + dx)
-#         flow_y.append(flow_y[-1] + dy)
-#         flow_z.append(flow_z[-1] + dz)
-#     return np.array(flow_x), np.array(flow_y), np.array(flow_z)
-
-
-# ###############################################################################
-# def GetField(crossplane, npts, factor, x, m, pl):
-#     """
-#     crossplane: XZ, YZ, XY, or XYZ (half is XZ, half is YZ)
-#     npts: number of point in each direction
-#     factor: ratio of plotting size to outer size of the particle
-#     x: size parameters for particle layers
-#     m: relative index values for particle layers
-#     """
-#     scan = np.linspace(-factor*x[-1], factor*x[-1], npts)
-#     zero = np.zeros(npts*npts, dtype = np.float64)
-
-#     if crossplane=='XZ':
-#         coordX, coordZ = np.meshgrid(scan, scan)
-#         coordX.resize(npts * npts)
-#         coordZ.resize(npts * npts)
-#         coordY = zero
-#         coordPlot1 = coordX
-#         coordPlot2 = coordZ
-#     elif crossplane == 'YZ':
-#         coordY, coordZ = np.meshgrid(scan, scan)
-#         coordY.resize(npts * npts)
-#         coordZ.resize(npts * npts)
-#         coordX = zero
-#         coordPlot1 = coordY
-#         coordPlot2 = coordZ
-#     elif crossplane == 'XY':
-#         coordX, coordY = np.meshgrid(scan, scan)
-#         coordX.resize(npts * npts)
-#         coordY.resize(npts * npts)
-#         coordZ = zero
-#         coordPlot1 = coordY
-#         coordPlot2 = coordX
-#     elif crossplane=='XYZ':
-#         coordX, coordZ = np.meshgrid(scan, scan)
-#         coordY, coordZ = np.meshgrid(scan, scan)
-#         coordPlot1, coordPlot2 = np.meshgrid(scan, scan)
-#         coordPlot1.resize(npts * npts)
-#         coordPlot2.resize(npts * npts)
-#         half=npts//2
-#         # coordX = np.copy(coordX)
-#         # coordY = np.copy(coordY)
-#         coordX[:,:half]=0
-#         coordY[:,half:]=0
-#         coordX.resize(npts*npts)
-#         coordY.resize(npts*npts)
-#         coordZ.resize(npts*npts)
-#     else:
-#         print("Unknown crossplane")
-#         import sys
-#         sys.exit()
-
-#     coord = np.vstack((coordX, coordY, coordZ)).transpose()
-#     terms, E, H = fieldnlay(np.array([x]), np.array([m]), coord, pl=pl)
-#     Ec = E[0, :, :]
-#     Hc = H[0, :, :]
-#     P = []
-#     P = np.array(map(lambda n: np.linalg.norm(np.cross(Ec[n], Hc[n])).real,
-#                      range(0, len(E[0]))))
-
-#     # for n in range(0, len(E[0])):
-#     #     P.append(np.linalg.norm( np.cross(Ec[n], np.conjugate(Hc[n]) ).real/2 ))
-#     return Ec, Hc, P, coordPlot1, coordPlot2
-###############################################################################
-
-def GetCSTField(cst_data_txt, WL):
-    x=np.transpose(np.loadtxt(cst_data_txt, skiprows=4))
+def GetCSTField(data_txt, WL):
+    skips = 0
+    with open(data_txt, 'r') as data_file:
+        for data_line in data_file:
+            if len(data_line.split()) > 4: break
+            skips += 1
+    print("Skips = "+ str(skips))
+    x=np.transpose(np.loadtxt(data_txt, skiprows=skips))
     E = np.sqrt(np.absolute(x[2]+1.0j*x[3])**2+np.absolute(x[4]+1.0j*x[5])**2+np.absolute(x[6]+1.0j*x[7])**2)
     H = np.sqrt(np.absolute(x[8]+1.0j*x[9])**2+np.absolute(x[10]+1.0j*x[11])**2+np.absolute(x[12]+1.0j*x[13])**2)
     coordX = np.unique(x[0])/WL
@@ -201,97 +46,89 @@ def fieldplot(fig, ax, WL, filetoplot, comment='', WL_units=' ', crossplane='XZ'
     
     cst_data_txt=filetoplot #"N2__R_200_100__D_310_Sep_10__nf.dat"
     Er, Hr, coordZ, coordX = GetCSTField(cst_data_txt,WL)
+    print(coordZ)
     npts = len(coordX)
-    #crop = 4.9
-    crop = 1
     try:
         from matplotlib import cm
         from matplotlib.colors import LogNorm
 
         if field_to_plot == 'Eabs':
             Eabs = Er
-            #print(coordX)
-            Eabs_data = np.fliplr(np.resize(Eabs, (len(coordX), len(coordZ))).T)#[:,int(npts/crop):-int(npts/crop)]
+            Eabs_data = np.resize(Eabs, (len(coordX), len(coordX)) )
+            # Eabs_data = np.fliplr(np.resize(Eabs, (len(coordX), len(coordZ))).T)
             label = r'$|E|$'
         if field_to_plot == 'Habs':
             Eabs = Hr
-            #print(coordX)
-            Eabs_data = np.fliplr(np.resize(Eabs, (len(coordX), len(coordZ))).T)#[:,int(npts/crop):-int(npts/crop)]
+            Eabs_data = np.fliplr(np.resize(Eabs, (len(coordX), len(coordZ))).T)
             label = r'$|H|$'
-        print(len(Eabs_data),len(Eabs_data[0]))
-        print(len(coordZ))
-        # WL units
-        WL=1
-        WL_units = r'$\lambda$'
-        # Rescale to better show the axes
-        # crop_x = (max(coordX)-min(coordX))/crop
+        # # WL units
+        # WL=1
+        # WL_units = r'$\lambda$'
         # scale_x = np.linspace(
-        #     (min(coordX)+crop_x), (max(coordX)-crop_x), len(Eabs_data[0]))#ts-int(npts*2/crop))
-        scale_x = np.linspace(
-            (min(coordX)), (max(coordX)), len(Eabs_data[0]))#ts-int(npts*2/crop))
-        scale_z = np.linspace(
-             min(coordZ), max(coordZ), len(coordZ))
+        #     (min(coordX)), (max(coordX)), len(Eabs_data[0]))
+        # scale_z = np.linspace(min(coordZ), max(coordZ), len(coordZ))
+        # ax.locator_params(nbins=5)
 
-        ax.locator_params(nbins=5)
+        # # Define scale ticks
+        # min_tick = np.amin(Eabs_data[~np.isnan(Eabs_data)])
+        # max_tick = np.amax(Eabs_data[~np.isnan(Eabs_data)])
+        # # min_tick = 0.0
+        # # max_tick = 2.59
+        # scale_ticks = np.linspace(min_tick, max_tick, 10)
+        # #scale_ticks = np.power(10.0, np.linspace(np.log10(min_tick), np.log10(max_tick), 6))
+        # #scale_ticks = [0.1,0.3,1,3,10, max_tick]
+        # # Interpolation can be 'nearest', 'bilinear' or 'bicubic'
+        # # ax.set_title(label)
+        # # build a rectangle in axes coords
+        # ax.annotate(subplot_label, xy=(0.0, 1.1), xycoords='axes fraction',  # fontsize=10,
+        #             horizontalalignment='left', verticalalignment='top')
+        # ax.xaxis.set_tick_params(width=outline_width/2.0)
+        # ax.yaxis.set_tick_params(width=outline_width/2.0)
+        # # ax.text(right, top, subplot_label,
+        # #         horizontalalignment='right',
+        # #         verticalalignment='bottom',
+        # #         transform=ax.transAxes)
+        cax = ax.imshow(Eabs_data, interpolation='none', cmap=cm.rainbow )
 
-        # Define scale ticks
-        min_tick = np.amin(Eabs_data[~np.isnan(Eabs_data)])
-        max_tick = np.amax(Eabs_data[~np.isnan(Eabs_data)])
-        # min_tick = 0.0
-        # max_tick = 2.59
-        scale_ticks = np.linspace(min_tick, max_tick, 10)
-        #scale_ticks = np.power(10.0, np.linspace(np.log10(min_tick), np.log10(max_tick), 6))
-        #scale_ticks = [0.1,0.3,1,3,10, max_tick]
-        # Interpolation can be 'nearest', 'bilinear' or 'bicubic'
-        # ax.set_title(label)
-        # build a rectangle in axes coords
-        ax.annotate(subplot_label, xy=(0.0, 1.1), xycoords='axes fraction',  # fontsize=10,
-                    horizontalalignment='left', verticalalignment='top')
-        ax.xaxis.set_tick_params(width=outline_width/2.0)
-        ax.yaxis.set_tick_params(width=outline_width/2.0)
-        # ax.text(right, top, subplot_label,
-        #         horizontalalignment='right',
-        #         verticalalignment='bottom',
-        #         transform=ax.transAxes)
-        cax = ax.imshow(Eabs_data, interpolation='none', cmap=cm.rainbow,
-                        origin='lower', vmin=min_tick, vmax=max_tick, extent=(min(scale_x), max(scale_x), min(scale_z), max(scale_z))
-                        # ,norm = LogNorm()
-                        )
-        ax.axis("image")
+        # cax = ax.imshow(Eabs_data, interpolation='none', cmap=cm.rainbow,
+        #                 origin='lower', vmin=min_tick, vmax=max_tick, extent=(min(scale_x), max(scale_x), min(scale_z), max(scale_z))
+        #                 # ,norm = LogNorm()
+        #                 )
+        # ax.axis("image")
 
-        # Add colorbar
-        cbar = fig.colorbar(cax, ticks=[a for a in scale_ticks], ax=ax)
-        # vertically oriented colorbar
-        if 'angle' in field_to_plot:
-            cbar.ax.set_yticklabels(['%3.0f' % (a) for a in scale_ticks])
-        else:
-            cbar.ax.set_yticklabels(['%3.2f' % (a) for a in scale_ticks])
-        # pos = list(cbar.ax.get_position().bounds)
-        #fig.text(pos[0] - 0.02, 0.925, '|E|/|E$_0$|', fontsize = 14)
-        lp2 = -5.0
-        lp1 = -1.0
-        if crossplane == 'XZ':
-            ax.set_xlabel('Z, ' + WL_units, labelpad=lp1)
-            ax.set_ylabel('X, ' + WL_units, labelpad=lp2)
-        elif crossplane == 'YZ':
-            ax.set_xlabel('Z, ' + WL_units, labelpad=lp1)
-            ax.set_ylabel('Y, ' + WL_units, labelpad=lp2)
-        elif crossplane=='XYZ':
-            ax.set_xlabel(r'$Z,\lambda$'+WL_units, fontsize = 25)
-            ax.set_ylabel(r'$Y:X,\lambda$'+WL_units, fontsize = 25, labelpad=lp2)
-            ax.axhline(y=0.0, ls='--', dashes=[7,5], color='gray', lw=outline_width)
-            bbox_props = dict(boxstyle="round,pad=0.3", fc="white", ec="white", lw=2)
-            ax.annotate('E-k', xy=(0.95, 0.95), xycoords='axes fraction', fontsize=21,
-                        horizontalalignment='right', verticalalignment='top',bbox = bbox_props)
-            ax.annotate('H-k', xy=(0.95, 0.05), xycoords='axes fraction', fontsize=21,
-                        horizontalalignment='right', verticalalignment='bottom',bbox = bbox_props)
+        # # Add colorbar
+        # cbar = fig.colorbar(cax, ticks=[a for a in scale_ticks], ax=ax)
+        # # vertically oriented colorbar
+        # if 'angle' in field_to_plot:
+        #     cbar.ax.set_yticklabels(['%3.0f' % (a) for a in scale_ticks])
+        # else:
+        #     cbar.ax.set_yticklabels(['%3.2f' % (a) for a in scale_ticks])
+        # # pos = list(cbar.ax.get_position().bounds)
+        # #fig.text(pos[0] - 0.02, 0.925, '|E|/|E$_0$|', fontsize = 14)
+        # lp2 = -5.0
+        # lp1 = -1.0
+        # if crossplane == 'XZ':
+        #     ax.set_xlabel('Z, ' + WL_units, labelpad=lp1)
+        #     ax.set_ylabel('X, ' + WL_units, labelpad=lp2)
+        # elif crossplane == 'YZ':
+        #     ax.set_xlabel('Z, ' + WL_units, labelpad=lp1)
+        #     ax.set_ylabel('Y, ' + WL_units, labelpad=lp2)
+        # elif crossplane=='XYZ':
+        #     ax.set_xlabel(r'$Z,\lambda$'+WL_units, fontsize = 25)
+        #     ax.set_ylabel(r'$Y:X,\lambda$'+WL_units, fontsize = 25, labelpad=lp2)
+        #     ax.axhline(y=0.0, ls='--', dashes=[7,5], color='gray', lw=outline_width)
+        #     bbox_props = dict(boxstyle="round,pad=0.3", fc="white", ec="white", lw=2)
+        #     ax.annotate('E-k', xy=(0.95, 0.95), xycoords='axes fraction', fontsize=21,
+        #                 horizontalalignment='right', verticalalignment='top',bbox = bbox_props)
+        #     ax.annotate('H-k', xy=(0.95, 0.05), xycoords='axes fraction', fontsize=21,
+        #                 horizontalalignment='right', verticalalignment='bottom',bbox = bbox_props)
 
-        elif crossplane == 'XY':
-            ax.set_xlabel('Y, ' + WL_units, labelpad=lp1)
-            ax.set_ylabel('X, ' + WL_units, labelpad=lp2)
-        # # This part draws the nanoshell
-        from matplotlib import patches
-        from matplotlib.path import Path
+        # elif crossplane == 'XY':
+        #     ax.set_xlabel('Y, ' + WL_units, labelpad=lp1)
+        #     ax.set_ylabel('X, ' + WL_units, labelpad=lp2)
+        # # # This part draws the nanoshell
+        # from matplotlib import patches
+        # from matplotlib.path import Path
         # for xx in [1.5/2.0, 1.5/2.0+0.8/3.75]:
         # #for xx in x:
         #     r = xx 
@@ -398,7 +235,7 @@ import string
 names = []
 for pathAndFilename in glob.iglob(os.path.join(r'.', r'*')):
     title, ext = os.path.splitext(os.path.basename(pathAndFilename))
-    if "__nf" in title:
+    if "--nf" in title:
         names.append(title+ext)
         #os.rename(pathAndFilename, "./"+str(i).zfill(3)+"__"+title+ext)
 print("Files to plot:")
@@ -420,13 +257,6 @@ for field_to_plot in fields:
         plt.clf()
         plt.close()
 
-def GetCSTField(cst_data_txt, WL):
-    x=np.transpose(np.loadtxt(cst_data_txt, skiprows=4))
-    E = np.sum(np.absolute(x[2]+1.0j*x[3])**2+np.absolute(x[4]+1.0j*x[5])**2+np.absolute(x[6]+1.0j*x[6])**2)
-    coordX = np.unique(x[0])/WL
-    coordZ = np.unique(x[1])/WL
-    print(x[2])
-    return E, coordX, coordZ
 
 # WL=800
 # cst_data_txt="N2__R_200_100__D_310_Sep_10__nf.dat"
