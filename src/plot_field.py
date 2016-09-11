@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 #
 #    Copyright (C) 2009-2015 Ovidio Peña Rodríguez <ovidio@bytesfall.com>
@@ -68,12 +68,12 @@ def fieldplot(fig, ax, WL, filetoplot, comment='', WL_units=' ', crossplane='XZ'
         # scale_z = np.linspace(min(coordZ), max(coordZ), len(coordZ))
         # ax.locator_params(nbins=5)
 
-        # # Define scale ticks
-        # min_tick = np.amin(Eabs_data[~np.isnan(Eabs_data)])
-        # max_tick = np.amax(Eabs_data[~np.isnan(Eabs_data)])
+        # Define scale ticks
+        min_tick = np.amin(Eabs_data[~np.isnan(Eabs_data)])
+        max_tick = np.amax(Eabs_data[~np.isnan(Eabs_data)])
         # # min_tick = 0.0
         # # max_tick = 2.59
-        # scale_ticks = np.linspace(min_tick, max_tick, 10)
+        scale_ticks = np.linspace(min_tick, max_tick, 10)
         # #scale_ticks = np.power(10.0, np.linspace(np.log10(min_tick), np.log10(max_tick), 6))
         # #scale_ticks = [0.1,0.3,1,3,10, max_tick]
         # # Interpolation can be 'nearest', 'bilinear' or 'bicubic'
@@ -96,7 +96,7 @@ def fieldplot(fig, ax, WL, filetoplot, comment='', WL_units=' ', crossplane='XZ'
         # ax.axis("image")
 
         # # Add colorbar
-        # cbar = fig.colorbar(cax, ticks=[a for a in scale_ticks], ax=ax)
+        cbar = fig.colorbar(cax, ticks=[a for a in scale_ticks], ax=ax)
         # # vertically oriented colorbar
         # if 'angle' in field_to_plot:
         #     cbar.ax.set_yticklabels(['%3.0f' % (a) for a in scale_ticks])
@@ -242,6 +242,7 @@ print("Files to plot:")
 print(names)
 for field_to_plot in fields:
     for filename in sorted(names):
+        print(filename)
         import matplotlib.pyplot as plt
         from matplotlib import rcParams
         rcParams.update({'font.size': 14})
@@ -250,7 +251,7 @@ for field_to_plot in fields:
         WL=3.75
         fieldplot(fig, axs, WL, filename, comment, WL_units, crossplane, field_to_plot, outline_width=1.5)
         fig.subplots_adjust(hspace=0.3, wspace=-0.1)
-        plt.savefig(filename+"-MSTM-"
+        plt.savefig(filename.replace(".","p")+"-MSTM-"
                         +field_to_plot+".pdf",pad_inches=0.02, bbox_inches='tight')
         plt.draw()
         #    plt.show()

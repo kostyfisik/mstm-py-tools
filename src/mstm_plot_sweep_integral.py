@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 import mstm_input as mi
 import math
@@ -43,6 +43,7 @@ def SaveSpectra(fname, WL,  from_span, to_span, total_points, b_ang, pol1, pol2)
     mstm_input.ResetSources()
     mstm_input.AddSource(WL, 0, 0, pol1)
     mstm_input.AddSource(WL, 0, b_ang, pol2)
+    print("Span "+str(rg))
     for i in range(len(rg)):
         span_value = rg[i]
         mstm_input.ResetMstmModel(WL, span_value, R2, n1, n2, Sep,axis) # do span over R1
@@ -68,7 +69,7 @@ def run_and_plot(b_ang, pol1, pol2):
     # from_span =  580.5342-span
     to_span =  310#+span
     total_points = 501
-    total_points = 41
+    total_points = 61
     #total_points = 101
     sign = SaveSpectra(fname, WL, from_span, to_span, total_points, b_ang, pol1, pol2)
     sign = sign+"-"+str(WL)+"nm"

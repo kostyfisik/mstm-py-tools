@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 import Spheres as sp
 import math
@@ -36,7 +36,7 @@ class InputFile:
     cut_plane_values={'xy':3, 'yx':3, 'yz':1, 'zy':1, 'zx':2, 'xz':2}
     #plot_scale = 1.0 # Ratio to first sphere
     plot_scale = 0.99995 # Ratio to first sphere for 
-    plot_points_per_diameter = 32 # for the first sphere
+    plot_points_per_diameter = 44 # for the first sphere
     nf_plane_position = 0.0
     r_in = 0.0;    r_out = 0.0
     ############################################################################
@@ -309,7 +309,7 @@ sphere_sizes_and_positions
             self.D = math.sqrt(self.D)
             self.Sep = self.D - (self.spheres.radii[0]+self.spheres.radii[1])
             assert (self.Sep>=0), ("ERROR! Found Sep<0")
-        self.sign = "N" + str(self.spheres.Count())+"--R-" + "{:.3g}".format(self.spheres.radii[0])
+        self.sign = "N" + str(self.spheres.Count())+"--R-" + "{:03.0f}".format(self.spheres.radii[0])
         if self.spheres.Count() == 2:
             self.sign += "-"+ str(self.spheres.radii[1])
             self.sign += "-D-" + "{:.3g}".format(self.D) +"-"+self.axis+"-Sep-"+"{:.3g}".format(self.Sep)
