@@ -29,13 +29,13 @@ def GetCSTField(data_txt, WL):
         for data_line in data_file:
             if len(data_line.split()) > 4: break
             skips += 1
-    print("Skips = "+ str(skips))
+    # print("Skips = "+ str(skips))
     x=np.transpose(np.loadtxt(data_txt, skiprows=skips))
     E = np.sqrt(np.absolute(x[2]+1.0j*x[3])**2+np.absolute(x[4]+1.0j*x[5])**2+np.absolute(x[6]+1.0j*x[7])**2)
     H = np.sqrt(np.absolute(x[8]+1.0j*x[9])**2+np.absolute(x[10]+1.0j*x[11])**2+np.absolute(x[12]+1.0j*x[13])**2)
     coordX = np.unique(x[0])/WL
     coordZ = np.unique(x[1])/WL
-    print(x[2])
+    # print(x[2])
     return E, H, coordX, coordZ
 
 def fieldplot(fig, ax, WL, filetoplot, comment='', WL_units=' ', crossplane='XZ',
@@ -46,7 +46,7 @@ def fieldplot(fig, ax, WL, filetoplot, comment='', WL_units=' ', crossplane='XZ'
     
     cst_data_txt=filetoplot #"N2__R_200_100__D_310_Sep_10__nf.dat"
     Er, Hr, coordZ, coordX = GetCSTField(cst_data_txt,WL)
-    print(coordZ)
+    # print(coordZ)
     npts = len(coordX)
     try:
         from matplotlib import cm
@@ -54,8 +54,7 @@ def fieldplot(fig, ax, WL, filetoplot, comment='', WL_units=' ', crossplane='XZ'
 
         if field_to_plot == 'Eabs':
             Eabs = Er
-            Eabs_data = np.resize(Eabs, (len(coordX), len(coordX)) )
-            # Eabs_data = np.fliplr(np.resize(Eabs, (len(coordX), len(coordZ))).T)
+            Eabs_data = np.fliplr(np.resize(Eabs, (len(coordX), len(coordZ))).T)
             label = r'$|E|$'
         if field_to_plot == 'Habs':
             Eabs = Hr
@@ -214,7 +213,8 @@ def fieldplot(fig, ax, WL, filetoplot, comment='', WL_units=' ', crossplane='XZ'
     finally:
         # terms, Qext, Qsca, Qabs, Qbk, Qpr, g, Albedo, S1, S2 = scattnlay(
         #     np.array([x]), np.array([m]))
-        print("Qabs = ")
+        # print("Qabs = ")
+        a = 0
         #
 
 

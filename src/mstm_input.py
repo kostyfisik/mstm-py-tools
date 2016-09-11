@@ -36,7 +36,7 @@ class InputFile:
     cut_plane_values={'xy':3, 'yx':3, 'yz':1, 'zy':1, 'zx':2, 'xz':2}
     #plot_scale = 1.0 # Ratio to first sphere
     plot_scale = 0.99995 # Ratio to first sphere for 
-    plot_points_per_diameter = 12 # for the first sphere
+    plot_points_per_diameter = 32 # for the first sphere
     nf_plane_position = 0.0
     r_in = 0.0;    r_out = 0.0
     ############################################################################
