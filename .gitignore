@@ -91,3 +91,4 @@ ENV/
 mstm-v3/*.mod
 mstm-v3/mstm
 bin
+*~
