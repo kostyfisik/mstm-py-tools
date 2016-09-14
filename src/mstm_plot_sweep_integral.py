@@ -37,7 +37,8 @@ def SaveSpectra(fname, WL,  from_span, to_span, total_points, b_ang, pol1, pol2)
     #R2 = 100
     Sep = 10
     axis = 'z-'
-    n1 = "BaTiO3-Wemple-o"
+    # n1 = "BaTiO3-Wemple-o"
+    n1 = "BaTiO3-fixed"
     n2 = "Au-Jhonson"
     out_int = ""
     mstm_input.ResetSources()
@@ -64,13 +65,13 @@ def SaveSpectra(fname, WL,  from_span, to_span, total_points, b_ang, pol1, pol2)
 def run_and_plot(b_ang, pol1, pol2):
     fname="spectra.dat"
     WL = 600
-    from_span = 10
+    from_span = 50
     # span = 0.5 #nm
     # from_span =  580.5342-span
-    to_span =  310#+span
+    to_span =  200#+span
     total_points = 501
-    total_points = 61
-    #total_points = 101
+    total_points = 16
+    #total_points = 61
     sign = SaveSpectra(fname, WL, from_span, to_span, total_points, b_ang, pol1, pol2)
     sign = sign+"-"+str(WL)+"nm"
     data_int = np.loadtxt(fname[:-4]+"-int.dat")
@@ -82,18 +83,22 @@ def run_and_plot(b_ang, pol1, pol2):
         plotwidth=.5
         ax = axs[i]
         Q_ext, Q_sca, Q_abs = 10, 11, 12
-        cax = ax.plot(data[i,:,0], data[i,:,Q_sca], linewidth=plotwidth,
+        cax = ax.plot(data[i,0::2,0], data[i,0::2,Q_sca], linewidth=plotwidth,
                       solid_joinstyle='round', solid_capstyle='round', color='black'
                       , label=r"$Q_{sca}$"
         )
-        cax = ax.plot(data[i,:,0], data[i,:,Q_ext], linewidth=plotwidth/2,
-                      solid_joinstyle='round', solid_capstyle='round', color='blue'
-                      , label=r"$Q_{ext}$"
+        cax = ax.plot(data[i,1::2,0], data[i,1::2,Q_sca], linewidth=plotwidth,
+                      solid_joinstyle='round', solid_capstyle='round', color='black'
+                      , label=r"$Q_{sca}$"
         )
-        cax = ax.plot(data[i,:,0], data[i,:,Q_abs], linewidth=plotwidth,
-                      solid_joinstyle='round', solid_capstyle='round', color='red'
-                      , label=r"$Q_{abs}$")
-        cax = ax.plot(data_int[:,0], data_int[:,1]/max(abs(data_int[:,1]))*max(data[i,:,Q_ext]),
+        # cax = ax.plot(data[i,:,0], data[i,:,Q_ext], linewidth=plotwidth/2,
+        #               solid_joinstyle='round', solid_capstyle='round', color='blue'
+        #               , label=r"$Q_{ext}$"
+        # )
+        # cax = ax.plot(data[i,:,0], data[i,:,Q_abs], linewidth=plotwidth,
+        #               solid_joinstyle='round', solid_capstyle='round', color='red'
+        #               , label=r"$Q_{abs}$")
+        cax = ax.plot(data_int[:,0], abs(data_int[:,1])/max(abs(data_int[:,1]))*max(data[i,:,Q_ext]),
                       linewidth=plotwidth*2,
                       solid_joinstyle='round', solid_capstyle='round', color='green'
                       , label=r"$norm(\frac{1}{V}\int{\,E_{0}(\omega)\,E_{1}(\omega)\,dV})$"
@@ -114,7 +119,7 @@ def run_and_plot(b_ang, pol1, pol2):
 
 
 
-b_ang_set = [45]
+b_ang_set = [0]
 # b_ang_set = [0,45,90,135,180]
 # b_ang_set = [0,30,45,60,90,120,135,150,180]
 pol_ang_set = [0]

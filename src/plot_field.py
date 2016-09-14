@@ -242,6 +242,8 @@ print("Files to plot:")
 print(names)
 for field_to_plot in fields:
     for filename in sorted(names):
+        if "npos000" not in filename:
+            continue
         print(filename)
         import matplotlib.pyplot as plt
         from matplotlib import rcParams

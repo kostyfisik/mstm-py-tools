@@ -29,16 +29,16 @@ class InputFile:
     # isPlotField = False
     isPlotField = True
     sign = ""
-    cut_plane = 'xz'
-    cut_plane_values={'xy':3, 'yx':3, 'yz':1, 'zy':1, 'zx':2, 'xz':2}
     ############################################################################
-    cut_plane = 'xz'
+    cut_plane = 'yz'
     cut_plane_values={'xy':3, 'yx':3, 'yz':1, 'zy':1, 'zx':2, 'xz':2}
     #plot_scale = 1.0 # Ratio to first sphere
     plot_scale = 0.99995 # Ratio to first sphere for 
-    plot_points_per_diameter = 44 # for the first sphere
+    plot_points_per_diameter = 15 # for the first sphere
     nf_plane_position = 0.0
     r_in = 0.0;    r_out = 0.0
+    ############################################################################
+    number_scattering_angles = 19
     ############################################################################
     def IntegrateOverlapNF(self, in_data, span_value):
         """This will evaluate overlapping integral for field from two sources.
@@ -66,25 +66,32 @@ class InputFile:
             self.CheckCoords(coordZs)
             integral += self.IntegrateInPlane(Es, pos, coordXs[0], coordZs[0])
         print ("r_in share = "+str(self.r_in/(self.r_out+self.r_in)))
-        return out_data, integral.imag/self.r_in
-        #return out_data, np.absolute(integral)/self.r_in
+        #return out_data, integral.imag/self.r_in
+        #return out_data, integral.real/self.r_in
+        return out_data, np.absolute(integral)/self.r_in
     ############################################################################
     def IntegrateInPlane(self,Es, coord_y, coordXs, coordZs):
         plane_int = 0.0
         for i in range(len(coordXs)):
             dist=math.sqrt(coordXs[i]**2+coord_y**2+coordZs[i]**2)
-            if dist < self.spheres.radii[0]*self.plot_scale:
+            if dist < self.spheres.radii[0]*self.plot_scale and coord_y < 0 and coordXs[i]<0 and coordZs[i] <0:
                 x = Es[0][i]
                 E0 = np.array([x[0]+1.0j*x[1], x[2]+1.0j*x[3], x[4]+1.0j*x[5]])
                 #E0 = [x[0]-1.0j*x[1], x[2]-1.0j*x[3], x[4]-1.0j*x[5]]
                 x = Es[1][i]
                 E1 = np.array([x[0]+1.0j*x[1], x[2]+1.0j*x[3], x[4]+1.0j*x[5]])
-                plane_int += np.inner(E0,E1.conjugate())
+                # print("e0",E0)
+                # print("e0",E1)
+                plane_int += np.inner(E0,E1)
+                # plane_int += E0[0]*E1[0]
+                # print(plane_int)
+                
                 # plane_int += E0[0].conjugate()*E1[0] + E0[1].conjugate()*E1[1] +  E0[2].conjugate*E1[2]
                 # plane_int += E0[0]*E1[0].conjugate() + E0[1]*E1[1].conjugate() +  E0[2]*E1[2].conjugate()
                 self.r_in += 1
             else:
                 self.r_out +=1
+        print(plane_int)
         return plane_int
     ############################################################################
     def CheckCoords(self,coords):
@@ -94,6 +101,8 @@ class InputFile:
                  raise ValueError("ERROR!!! Cross-sections coordinats do not match by len() !")
             i = 0
             for i in range(len(coord)):
+                if ref[i] == 0 and coord[i] == 0:
+                    continue
                 diff = 1.0 - coord[i]/ref[i]
                 if abs(diff) > 1e-2:  # Defined by number of digits in the MSTM output
                     raise ValueError("ERROR!!! Cross-sections coordinats do not match: %f and %f" % (coord[i], ref[i]))
@@ -165,12 +174,14 @@ class InputFile:
                 self.spheres.AddSphere(R2, [0, 0, -(R1+R2+Sep)], n2_name)
             self.SetSign()
     def Run(self):
+        self.SetSign()
         self.WriteFile()
         from subprocess import call
         import os
         with  open(os.devnull, 'w') as FNULL:
-            call(["mpirun", "-np", "2", "./mstm", "mstm.inp"],
-                 stdout=FNULL)
+            call(["mpirun", "-np", "2", "./mstm", "mstm.inp"]
+                    , stdout=FNULL
+            )
     ############################################################################
     def GetSource(self, i):
         assert (i<len(self.source_WL)),("ERROR! Not enough sources!")
@@ -233,8 +244,11 @@ medium_imag_ref_index
 0.d0
 target_euler_angles_deg
 0.0d0,0.0d0,0.0d0
+number_scattering_angles
+"""
+        text += str(self.number_scattering_angles) + """
 mie_epsilon
--16
+1e-6
 translation_epsilon
 1.0d-6
 solution_epsilon
@@ -250,7 +264,7 @@ near_field_distance
 iterations_per_correction
 20
 incident_or_target_frame
-0
+1
 normalize_scattering_matrix
 1
 incident_azimuth_angle_deg
@@ -314,16 +328,18 @@ sphere_sizes_and_positions
             self.sign += "-"+ str(self.spheres.radii[1])
             self.sign += "-D-" + "{:.3g}".format(self.D) +"-"+self.axis+"-Sep-"+"{:.3g}".format(self.Sep)
         self.sign += "-WL-{:04.0f}nm".format(self.spheres.WL)
-        if self.isPlotField == True:
-            self.sign += "-"+self.cut_plane
-        self.sign += "-src-ang"
-        for i in range(len(self.source_WL)):
-            self.sign += "-{:.3g}".format(self.ang_b_k_z[i])
-        self.sign += "-pol"
-        for i in range(len(self.source_WL)):
-            self.sign += "-{:.3g}".format(self.ang_pol_e_kz[i])
+        # if self.isPlotField == True:
+        #     self.sign += "-"+self.cut_plane
+        # self.sign += "-src-ang"
+        # for i in range(len(self.source_WL)):
+        #     self.sign += "-{:.3g}".format(self.ang_b_k_z[i])
+        # self.sign += "-pol"
+        # for i in range(len(self.source_WL)):
+        #     self.sign += "-{:.3g}".format(self.ang_pol_e_kz[i])
+        self.sign += "-npos"+"{:03.3g}".format(self.nf_plane_position).replace(".","p")
     ############################################################################
     def WriteFile(self):
+        self.SetSign()
         with open('mstm.inp', 'w') as f:
             f.write(self.PrintInput())
     ############################################################################
