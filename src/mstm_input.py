@@ -40,6 +40,13 @@ class InputFile:
     ############################################################################
     number_scattering_angles = 19
     ############################################################################
+    def RunForQsca(self, in_data):
+        span_value = 0
+        out_data = in_data
+        self.Run()
+        out_data = self.ReadDataTotal(out_data, span_value)
+        return out_data
+        
     def IntegrateOverlapNF(self, in_data, span_value):
         """This will evaluate overlapping integral for field from two sources.
         """
@@ -58,7 +65,7 @@ class InputFile:
                 scale = 2.0*math.pi/float(self.spheres.WL)
                 self.nf_plane_position = pos*scale
                 self.Run()
-                out_data = self.ReadData(out_data, span_value)
+                out_data = self.ReadDataPerSphere(out_data, span_value)
                 E, H, coordX, coordZ = self.ReadField(self.sign+"--nf.dat",self.spheres.WL)
                 Es.append(E);    Hs.append(H)
                 coordXs.append(coordX/scale);    coordZs.append(coordZ/scale)
@@ -126,7 +133,7 @@ class InputFile:
         # coordZ = np.unique(x[1])
         return E, H, coordX, coordZ
     ############################################################################
-    def ReadData(self, in_data, span_value):
+    def ReadDataPerSphere(self, in_data, span_value):
         out_data = in_data
         isData = False
         WL = self.spheres.WL
@@ -134,11 +141,29 @@ class InputFile:
             for data_line in data_file:
                 if "Qsca" in data_line:
                     if len(out_data) == 0:
-                        out_data += "# x WL "+data_line
+                        out_data += "#x WL "+data_line
                     isData = True
                     continue
                 if isData == True:
                     if 12 == len(data_line.split()):
+                        out_data += str(span_value)+" "+str(WL)+" "+data_line
+                    else:
+                        isData = False
+        return out_data
+    ############################################################################
+    def ReadDataTotal(self, in_data, span_value):
+        out_data = in_data
+        isData = False
+        WL = self.spheres.WL
+        with open(self.sign+'.dat', 'r') as data_file:
+            for data_line in data_file:
+                if "parallel" in data_line:
+                    if len(out_data) == 0:
+                        out_data += "#x WL Qext Qabs Qsca\n"
+                    isData = True
+                    continue
+                if isData == True:
+                    if 3 == len(data_line.split()):
                         out_data += str(span_value)+" "+str(WL)+" "+data_line
                     else:
                         isData = False
@@ -193,6 +218,7 @@ class InputFile:
     ############################################################################
     def PrintInput(self):
         self.SetSign()
+        print(self.spheres.WL)
         scale = 2.0*math.pi/float(self.spheres.WL)
         R1 = self.spheres.radii[0]*scale
         plot_nf = 0

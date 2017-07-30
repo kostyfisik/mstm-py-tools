@@ -12,6 +12,7 @@ class Spheres:
         fname = self.materials[i]+".txt"
         return self.GetIndex(WLs, fname)[0][1]
     def GetIndex(self,WLs, fname):
+        print(fname)
         data = np.loadtxt(fname)
         WL = data[:,0]*1000.0
         indexRe = data[:,1]
